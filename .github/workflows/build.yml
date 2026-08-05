@@ -1,0 +1,41 @@
+name: Build Timee
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Forráskód letöltése
+        uses: actions/checkout@v6
+
+      - name: Node.js beállítása
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          package-manager-cache: false
+
+      - name: Függőségek telepítése
+        run: npm install
+
+      - name: Astro build
+        run: npm run build
+
+      - name: Kész weboldal elmentése
+        uses: actions/upload-artifact@v7
+        with:
+          name: timee-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
