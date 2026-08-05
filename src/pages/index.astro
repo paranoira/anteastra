@@ -1,0 +1,214 @@
+---
+import "../styles/global.css";
+---
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#07111f" />
+    <meta
+      name="description"
+      content="Timee – gyors hely-, koordináta-, időzóna- és idősegéd amatőr csillagászoknak."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <title>Timee – csillagászati gyorssegéd</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Ugrás a tartalomhoz</a>
+
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="brand" href="/" aria-label="Timee kezdőlap">
+          <span class="brand-mark" aria-hidden="true">✦</span>
+          <span>
+            <strong>Timee</strong>
+            <small>csillagászati gyorssegéd</small>
+          </span>
+        </a>
+
+        <div class="header-tools">
+          <div class="utc-clock" aria-label="Aktuális UTC idő">
+            <span>UTC</span>
+            <strong id="header-utc">--:--:--</strong>
+          </div>
+          <button class="icon-button" id="red-mode-button" type="button" aria-pressed="false">
+            <span aria-hidden="true">●</span>
+            <span class="button-label">Vörös mód</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="shell main-content">
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">Távcső-beállítás</p>
+        <h1 id="page-title">A szükséges hely- és időadatok egy képernyőn.</h1>
+        <p>
+          GPS-helyzet, pontos koordináták, helyi és UTC-idő, időzóna és nyári
+          időszámítás – gyorsan, másolható formában.
+        </p>
+      </section>
+
+      <section class="action-card" aria-labelledby="location-title">
+        <div>
+          <p class="eyebrow">Észlelőhely</p>
+          <h2 id="location-title">Válaszd ki a helyszínt</h2>
+          <p class="muted">
+            A böngésző csak gombnyomásra kér helyhozzáférést. A helyzetet nem küldjük
+            a Timee szerverére.
+          </p>
+        </div>
+        <div class="primary-actions">
+          <button class="button button-primary" id="gps-button" type="button">
+            <span aria-hidden="true">⌖</span>
+            Helyzetem használata
+          </button>
+          <button class="button button-secondary" id="toggle-manual-button" type="button" aria-expanded="false" aria-controls="manual-location">
+            Koordináták megadása
+          </button>
+        </div>
+
+        <form id="manual-location" class="manual-form" hidden>
+          <label>
+            Szélesség
+            <input id="latitude-input" name="latitude" type="number" min="-90" max="90" step="any" inputmode="decimal" placeholder="47.5480" required />
+          </label>
+          <label>
+            Hosszúság
+            <input id="longitude-input" name="longitude" type="number" min="-180" max="180" step="any" inputmode="decimal" placeholder="18.7200" required />
+          </label>
+          <button class="button button-primary" type="submit">Helyszín alkalmazása</button>
+        </form>
+
+        <p id="status-message" class="status" role="status" aria-live="polite">
+          Még nincs kiválasztott helyszín.
+        </p>
+      </section>
+
+      <div class="dashboard-grid">
+        <section class="data-card data-card-wide" aria-labelledby="coordinates-title">
+          <div class="card-heading">
+            <div>
+              <p class="eyebrow">Pozíció</p>
+              <h2 id="coordinates-title">Koordináták</h2>
+            </div>
+            <span id="location-source" class="badge">Nincs adat</span>
+          </div>
+
+          <dl class="data-list coordinates-list">
+            <div>
+              <dt>Decimális fok</dt>
+              <dd id="decimal-coordinates">—</dd>
+            </div>
+            <div>
+              <dt>Fok–perc–másodperc</dt>
+              <dd id="dms-coordinates">—</dd>
+            </div>
+            <div>
+              <dt>GPS-pontosság</dt>
+              <dd id="accuracy-value">—</dd>
+            </div>
+            <div>
+              <dt>Tengerszint feletti magasság</dt>
+              <dd id="elevation-value">—</dd>
+            </div>
+          </dl>
+
+          <div class="card-actions">
+            <button class="button button-quiet" id="copy-decimal-button" type="button" disabled>
+              Decimális másolása
+            </button>
+            <button class="button button-quiet" id="copy-dms-button" type="button" disabled>
+              DMS másolása
+            </button>
+          </div>
+        </section>
+
+        <section class="data-card" aria-labelledby="local-time-title">
+          <div class="card-heading">
+            <div>
+              <p class="eyebrow">Kiválasztott hely</p>
+              <h2 id="local-time-title">Helyi idő</h2>
+            </div>
+          </div>
+          <time id="local-clock" class="large-clock">--:--:--</time>
+          <p id="local-date" class="date-line">—</p>
+        </section>
+
+        <section class="data-card" aria-labelledby="utc-time-title">
+          <div class="card-heading">
+            <div>
+              <p class="eyebrow">Egyezményes világidő</p>
+              <h2 id="utc-time-title">UTC</h2>
+            </div>
+          </div>
+          <time id="utc-clock" class="large-clock">--:--:--</time>
+          <p id="utc-date" class="date-line">—</p>
+        </section>
+
+        <section class="data-card data-card-wide" aria-labelledby="timezone-title">
+          <div class="card-heading">
+            <div>
+              <p class="eyebrow">Időbeállítás</p>
+              <h2 id="timezone-title">Időzóna</h2>
+            </div>
+          </div>
+          <dl class="data-list timezone-list">
+            <div>
+              <dt>IANA időzóna</dt>
+              <dd id="timezone-name">—</dd>
+            </div>
+            <div>
+              <dt>UTC-eltérés</dt>
+              <dd id="utc-offset">—</dd>
+            </div>
+            <div>
+              <dt>Rövidítés</dt>
+              <dd id="timezone-abbreviation">—</dd>
+            </div>
+            <div>
+              <dt>Nyári időszámítás</dt>
+              <dd id="dst-status">—</dd>
+            </div>
+          </dl>
+          <div class="card-actions">
+            <button class="button button-quiet" id="copy-setup-button" type="button" disabled>
+              Teljes beállítás másolása
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <aside class="privacy-note">
+        <strong>Adatkezelés:</strong> a mentett helyszín csak ebben a böngészőben marad.
+        Az időzóna és a becsült magasság meghatározásához a koordinátát az
+        Open-Meteo szolgáltatás kapja meg.
+      </aside>
+
+      <section class="coming-next" aria-labelledby="next-title">
+        <p class="eyebrow">Következő lépések</p>
+        <h2 id="next-title">Erre épül majd a teljes észlelési gyorspanel.</h2>
+        <div class="feature-chips" aria-label="Tervezett funkciók">
+          <span>Napnyugta és szürkület</span>
+          <span>Holdfázis és holdkelte</span>
+          <span>Felhőzet és harmatveszély</span>
+          <span>Mit érdemes ma észlelni?</span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell">
+        <span>Timee</span>
+        <span>Gyors segéd amatőr csillagászoknak.</span>
+      </div>
+    </footer>
+
+    <script>
+      import { initApp } from "../scripts/app.js";
+      initApp();
+    </script>
+  </body>
+</html>
