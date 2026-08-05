@@ -35,7 +35,8 @@ jobs:
       - name: Kész weboldal elmentése
         uses: actions/upload-artifact@v7
         with:
-          name: timee-dist
-          path: dist/
-          if-no-files-found: error
-          retention-days: 14
+            name: timee-dist
+            path: dist/
+            if-no-files-found: error
+            retention-days: 14
+            include-hidden-files: true
