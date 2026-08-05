@@ -4,7 +4,9 @@ const THEME_KEY = "timee.theme.v1";
 const state = {
   location: null,
   timezone: null,
-  tickId: null
+  tickId: null,
+  locationRequestId: 0,
+  timezoneAbortController: null
 };
 
 const ui = {};
@@ -131,13 +133,27 @@ async function applyManualLocation(event) {
 }
 
 async function setLocation(location) {
+  const requestId = ++state.locationRequestId;
+  state.timezoneAbortController?.abort();
+  state.timezoneAbortController = new AbortController();
+
   state.location = location;
   state.timezone = null;
   renderLocation();
+  resetLocationTimeUi();
   setStatus("Időzóna és magasság lekérése…", "loading");
 
   try {
-    const timezoneInfo = await fetchTimezoneInfo(location.latitude, location.longitude);
+    const timezoneInfo = await fetchTimezoneInfo(
+      location.latitude,
+      location.longitude,
+      state.timezoneAbortController.signal
+    );
+
+    // Egy korábbi, lassabban visszaérő kérés soha ne írhassa felül
+    // az időközben kiválasztott új helyszínt.
+    if (requestId !== state.locationRequestId) return;
+
     state.timezone = timezoneInfo;
     state.location.elevation = Number.isFinite(location.gpsAltitude)
       ? location.gpsAltitude
@@ -145,26 +161,21 @@ async function setLocation(location) {
     state.location.elevationSource = Number.isFinite(location.gpsAltitude) ? "GPS" : "Open-Meteo";
     persistLocation();
     renderAll();
-    setStatus("A helyszín készen áll a távcső beállításához.", "success");
+    setStatus("A helyszín és a hozzá tartozó helyi idő frissült.", "success");
   } catch (error) {
-    const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-    state.timezone = {
-      name: deviceTimezone,
-      abbreviation: getTimezoneAbbreviation(new Date(), deviceTimezone),
-      offsetSeconds: getOffsetMinutes(new Date(), deviceTimezone) * 60,
-      dst: getDstInfo(new Date(), deviceTimezone),
-      fallback: true
-    };
-    state.location.elevation = location.gpsAltitude;
+    if (error?.name === "AbortError" || requestId !== state.locationRequestId) return;
+
+    state.timezone = null;
+    state.location.elevation = Number.isFinite(location.gpsAltitude) ? location.gpsAltitude : null;
     state.location.elevationSource = Number.isFinite(location.gpsAltitude) ? "GPS" : null;
-    persistLocation();
-    renderAll();
-    setStatus("Az online időzóna-lekérés nem sikerült; átmenetileg a készülék időzónáját használjuk.", "error");
+    renderLocation();
+    resetLocationTimeUi("Az időzóna nem tölthető be");
+    setStatus("Az időzóna-lekérés nem sikerült. Próbáld újra; nem mutatunk helyette téves készülékidőt.", "error");
     console.error(error);
   }
 }
 
-async function fetchTimezoneInfo(latitude, longitude) {
+async function fetchTimezoneInfo(latitude, longitude, signal) {
   const params = new URLSearchParams({
     latitude: latitude.toFixed(6),
     longitude: longitude.toFixed(6),
@@ -173,7 +184,9 @@ async function fetchTimezoneInfo(latitude, longitude) {
     forecast_days: "1"
   });
   const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`, {
-    headers: { Accept: "application/json" }
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+    signal
   });
   if (!response.ok) throw new Error(`Open-Meteo hiba: ${response.status}`);
   const data = await response.json();
@@ -214,6 +227,16 @@ function renderAll() {
   renderLocation();
   renderTimezone();
   renderClocks();
+}
+
+function resetLocationTimeUi(message = "Időzóna lekérése…") {
+  ui.localClock.textContent = "--:--:--";
+  ui.localDate.textContent = message;
+  ui.timezoneName.textContent = "—";
+  ui.utcOffset.textContent = "—";
+  ui.timezoneAbbreviation.textContent = "—";
+  ui.dstStatus.textContent = "—";
+  ui.copySetupButton.disabled = true;
 }
 
 function renderLocation() {
