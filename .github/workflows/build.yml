@@ -24,16 +24,11 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "22"
-          package-manager-cache: false
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Függőségek telepítése
-        run: npm install
-      - name: Lock fájl elmentése
-        uses: actions/upload-artifact@v7
-        with:
-          name: package-lock
-          path: package-lock.json
-          if-no-files-found: error
+        run: npm ci
 
       - name: Astro build
         run: npm run build
@@ -41,8 +36,8 @@ jobs:
       - name: Kész weboldal elmentése
         uses: actions/upload-artifact@v7
         with:
-            name: timee-dist
-            path: dist/
-            if-no-files-found: error
-            retention-days: 14
-            include-hidden-files: true
+          name: timee-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+          include-hidden-files: true
