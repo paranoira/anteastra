@@ -46,4 +46,4 @@ jobs:
           security: strict
           log-level: standard
           timeout: 60000
-          dry-run: true
+          dry-run: false
