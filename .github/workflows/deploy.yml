@@ -1,0 +1,49 @@
+name: Deploy Timee
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: timee-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build és FTPS deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Forráskód letöltése
+        uses: actions/checkout@v6
+
+      - name: Node.js beállítása
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Függőségek telepítése
+        run: npm ci
+
+      - name: Astro build
+        run: npm run build
+
+      - name: FTPS feltöltés tesztelése
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./dist/
+          server-dir: ./
+          security: strict
+          log-level: standard
+          timeout: 60000
+          dry-run: true
