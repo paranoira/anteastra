@@ -1,20 +1,22 @@
 # Timee
 
-Gyors hely-, koordináta-, időzóna- és idősegéd amatőr csillagászoknak.
+Gyors hely-, idő- és időjárási segéd amatőr csillagászoknak.
 
-## Követelmények
+Éles oldal: https://timee.hu
 
-- Node.js 22.12.0 vagy újabb, páros főverzió
+## Fejlesztői környezet
+
+Szükséges:
+
+- Node.js 22.12 vagy újabb támogatott páros verzió
 - npm
-
-## Helyi fejlesztés
 
 ```bash
 npm install
 npm run dev
 ```
 
-Az Astro fejlesztői szervere alapértelmezetten a `http://localhost:4321` címen indul.
+Az Astro fejlesztői szervere ezután kiírja a helyi címet.
 
 ## Éles build
 
@@ -22,8 +24,21 @@ Az Astro fejlesztői szervere alapértelmezetten a `http://localhost:4321` címe
 npm run build
 ```
 
-A feltölthető statikus oldal a `dist/` mappába készül. A `dist/` tartalma kerül a timee.hu `public_html` könyvtárába.
+A publikálható oldal a `dist/` könyvtárba kerül. A `dist/` nincs Gitben,
+mert minden kiadáskor újragenerálható.
 
-## v0.1.1
+## Telepítés cPanelre
 
-A helyszín módosításakor a helyi idő és az időzóna minden esetben az új koordinátához frissül. A régi adatok a lekérés alatt nem maradnak láthatók, és a párhuzamos kérések nem írhatják felül egymást.
+1. Futtasd az `npm run build` parancsot, vagy töltsd le a GitHub Actions
+   által készített `timee-dist` artifactot.
+2. A `dist/` tartalmát töltsd fel a `public_html/` gyökerébe.
+3. Az `index.html` közvetlenül a `public_html/` alatt legyen.
+4. Frissítés után ellenőrizd a `https://timee.hu/VERSION.txt` címet.
+
+## Munkafolyamat
+
+- A `main` ág mindig működő állapotot tartalmazzon.
+- Új funkció külön ágon készüljön, például `feature/location-name`.
+- Hibajavítás külön ágon készüljön, például `fix/timezone-refresh`.
+- A cPanel fájljait ne szerkeszd kézzel, kivéve sürgős helyreállításkor.
+- Jelszót, API-kulcsot és `.env` fájlt soha ne commitolj.

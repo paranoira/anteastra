@@ -1,2 +1,2 @@
-Timee v0.1.2
+Timee v0.2.0
 Build for https://timee.hu

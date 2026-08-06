@@ -9,7 +9,7 @@ import "../styles/global.css";
     <meta name="theme-color" content="#07111f" />
     <meta
       name="description"
-      content="Timee – gyors hely-, koordináta-, időzóna- és idősegéd amatőr csillagászoknak."
+      content="Timee – gyors hely-, idő- és időjárási segéd amatőr csillagászoknak."
     />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/site.webmanifest" />
@@ -44,10 +44,10 @@ import "../styles/global.css";
     <main id="main" class="shell main-content">
       <section class="intro" aria-labelledby="page-title">
         <p class="eyebrow">Távcső-beállítás</p>
-        <h1 id="page-title">A szükséges hely- és időadatok egy képernyőn.</h1>
+        <h1 id="page-title">Hely, idő és észlelési időjárás egy képernyőn.</h1>
         <p>
-          GPS-helyzet, pontos koordináták, helyi és UTC-idő, időzóna és nyári
-          időszámítás – gyorsan, másolható formában.
+          GPS-helyzet, pontos koordináták, helyi és UTC-idő, valamint a következő
+          órák felhőzete, szele és harmatveszélye – gyorsan, egy helyen.
         </p>
       </section>
 
@@ -85,6 +85,67 @@ import "../styles/global.css";
         <p id="status-message" class="status" role="status" aria-live="polite">
           Még nincs kiválasztott helyszín.
         </p>
+      </section>
+
+      <section id="weather-card" class="weather-card" aria-labelledby="weather-title">
+        <div class="weather-heading">
+          <div>
+            <p class="eyebrow">Következő 12 óra</p>
+            <h2 id="weather-title">Észlelési időjárás</h2>
+          </div>
+          <div class="weather-heading-actions">
+            <span id="weather-status-badge" class="weather-status" data-state="idle">Nincs adat</span>
+            <button class="button button-quiet" id="refresh-weather-button" type="button" disabled>
+              Frissítés
+            </button>
+          </div>
+        </div>
+
+        <p id="weather-summary" class="weather-summary">
+          Válassz helyszínt az előrejelzéshez.
+        </p>
+
+        <div class="weather-metrics" aria-label="Aktuális időjárási adatok">
+          <article class="weather-metric">
+            <span>Állapot</span>
+            <strong id="weather-condition">—</strong>
+            <small>Modell szerinti aktuális helyzet</small>
+          </article>
+          <article class="weather-metric">
+            <span>Felhőzet</span>
+            <strong id="weather-cloud">—</strong>
+            <small id="weather-cloud-layers">Alacsony / közép / magas: —</small>
+          </article>
+          <article class="weather-metric">
+            <span>Hőmérséklet</span>
+            <strong id="weather-temperature">—</strong>
+            <small>A kiválasztott helyen</small>
+          </article>
+          <article class="weather-metric">
+            <span>Szél</span>
+            <strong id="weather-wind">—</strong>
+            <small id="weather-wind-detail">Széllökés: —</small>
+          </article>
+          <article class="weather-metric">
+            <span>Páratartalom</span>
+            <strong id="weather-humidity">—</strong>
+            <small id="weather-dewpoint">Harmatpont: —</small>
+          </article>
+          <article class="weather-metric weather-metric-dew">
+            <span>Harmatveszély</span>
+            <strong id="weather-dew-risk" data-state="unknown">—</strong>
+            <small>A hőmérséklet és a harmatpont közelsége alapján</small>
+          </article>
+        </div>
+
+        <div id="weather-hourly" class="weather-hourly" role="list" aria-label="Órás előrejelzés">
+          <p class="weather-empty">Válassz helyszínt az előrejelzéshez.</p>
+        </div>
+
+        <div class="weather-footer">
+          <p id="weather-updated">—</p>
+          <p>Az összegzés felhőzet, csapadékesély és szél alapján készült; a helyi viszonyok eltérhetnek.</p>
+        </div>
       </section>
 
       <div class="dashboard-grid">
@@ -183,8 +244,8 @@ import "../styles/global.css";
 
       <aside class="privacy-note">
         <strong>Adatkezelés:</strong> a mentett helyszín csak ebben a böngészőben marad.
-        Az időzóna és a becsült magasság meghatározásához a koordinátát az
-        Open-Meteo szolgáltatás kapja meg.
+        Az időzóna, a becsült magasság és az időjárás meghatározásához a koordinátát
+        az Open-Meteo szolgáltatás kapja meg.
       </aside>
 
       <section class="coming-next" aria-labelledby="next-title">
@@ -193,8 +254,8 @@ import "../styles/global.css";
         <div class="feature-chips" aria-label="Tervezett funkciók">
           <span>Napnyugta és szürkület</span>
           <span>Holdfázis és holdkelte</span>
-          <span>Felhőzet és harmatveszély</span>
-          <span>Mit érdemes ma észlelni?</span>
+          <span>Seeing és átlátszóság</span>
+          <span>Mentett észlelőhelyek</span>
         </div>
       </section>
     </main>
