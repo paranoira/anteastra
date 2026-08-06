@@ -1,0 +1,160 @@
+.card-layout-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface), transparent 15%);
+}
+
+.card-layout-toolbar p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.card-layout-toolbar-actions,
+.card-layout-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.card-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.layout-card {
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.layout-card-wide {
+  grid-column: 1 / -1;
+}
+
+.card-layout-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 58px;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-soft), transparent 25%);
+}
+
+.card-layout-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-layout-actions button {
+  min-height: 36px;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.card-layout-actions button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.card-layout-actions button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.card-layout-actions button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.card-drag-button,
+.card-move-button {
+  display: none;
+}
+
+.card-layout.is-arranging .card-drag-button,
+.card-layout.is-arranging .card-move-button {
+  display: inline-flex;
+}
+
+.card-layout.is-arranging .layout-card {
+  outline: 1px dashed color-mix(in srgb, var(--accent), transparent 25%);
+  cursor: grab;
+}
+
+.layout-card.is-dragging {
+  opacity: 0.55;
+}
+
+.layout-card.is-collapsed .card-layout-controls {
+  border-bottom: 0;
+}
+
+.card-collapsible-content {
+  padding: clamp(1.2rem, 3vw, 2rem);
+}
+
+.action-card > .card-collapsible-content {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.25rem 2rem;
+  align-items: center;
+}
+
+.data-card > .card-collapsible-content {
+  padding: clamp(1.2rem, 3vw, 1.8rem);
+}
+
+@media (max-width: 760px) {
+  .card-layout-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .card-layout-toolbar-actions .button {
+    flex: 1 1 auto;
+  }
+
+  .card-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .layout-card-wide {
+    grid-column: auto;
+  }
+
+  .action-card > .card-collapsible-content {
+    grid-template-columns: 1fr;
+  }
+
+  .card-layout-controls {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .card-layout-actions {
+    width: 100%;
+  }
+
+  .card-collapse-button {
+    margin-left: auto;
+  }
+}
