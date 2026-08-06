@@ -33,7 +33,7 @@ jobs:
       - name: Astro build
         run: npm run build
 
-      - name: FTPS feltöltés tesztelése
+      - name: FTPS feltöltés
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FTP_SERVER }}
