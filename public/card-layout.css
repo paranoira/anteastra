@@ -31,6 +31,7 @@
 }
 
 .layout-card {
+  display: block;
   min-width: 0;
   margin: 0 !important;
   padding: 0 !important;
@@ -110,6 +111,10 @@
 
 .card-collapsible-content {
   padding: clamp(1.2rem, 3vw, 2rem);
+}
+
+.card-collapsible-content[hidden] {
+  display: none !important;
 }
 
 .action-card > .card-collapsible-content {
