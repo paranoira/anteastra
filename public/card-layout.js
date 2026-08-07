@@ -210,13 +210,15 @@ function initCardLayout() {
   layout.className = "card-layout";
 
   const savedOrder = normalizeOrder(safeRead(ORDER_KEY, DEFAULT_ORDER), cards);
+
+  main.insertBefore(toolbar, actionCard);
+  main.insertBefore(layout, actionCard);
+
   savedOrder.forEach((key) => {
     const card = cards.find((item) => item.dataset.cardKey === key);
     if (card) layout.append(card);
   });
 
-  main.insertBefore(toolbar, actionCard);
-  main.insertBefore(layout, actionCard);
   dashboard?.remove();
 
   let arranging = false;
