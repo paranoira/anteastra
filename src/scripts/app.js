@@ -23,7 +23,7 @@ export function initApp() {
 function mapUi() {
   [
     "header-utc", "red-mode-button", "gps-button", "toggle-manual-button",
-    "manual-location", "latitude-input", "longitude-input", "status-message",
+    "manual-location", "latitude-input", "longitude-input", "status-message", "location-card-summary",
     "location-source", "decimal-coordinates", "dms-coordinates", "accuracy-value",
     "elevation-value", "copy-decimal-button", "copy-dms-button", "local-clock",
     "local-date", "utc-clock", "utc-date", "timezone-name", "utc-offset",
@@ -371,6 +371,9 @@ function renderLocation() {
   if (!location) return;
 
   ui.locationSource.textContent = location.source === "GPS" ? "GPS-helyzet" : "Kézi helyszín";
+  if (ui.locationCardSummary) {
+    ui.locationCardSummary.textContent = getShortLocationText(location);
+  }
   ui.decimalCoordinates.textContent = getDecimalText();
   ui.dmsCoordinates.textContent = getDmsText();
   ui.accuracyValue.textContent = Number.isFinite(location.accuracy)
@@ -649,6 +652,20 @@ function formatDateTime(date, timeZone) {
     minute: "2-digit",
     hour12: false
   }).format(date);
+}
+
+function getShortLocationText(location) {
+  const named = typeof location?.name === "string" ? location.name.trim() : "";
+  if (named) return named;
+
+  const lat = location?.latitude;
+  const lon = location?.longitude;
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return "Nincs kiválasztott helyszín";
+
+  const source = location.source === "GPS" ? "GPS" : "Kézi";
+  const latitude = `${Math.abs(lat).toFixed(4)}° ${lat >= 0 ? "N" : "S"}`;
+  const longitude = `${Math.abs(lon).toFixed(4)}° ${lon >= 0 ? "E" : "W"}`;
+  return `${source} · ${latitude}, ${longitude}`;
 }
 
 function getDecimalText() {
