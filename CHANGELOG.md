@@ -1,13 +1,16 @@
 # Változásnapló
 
-## 0.2.1 – 2026-08-07
+## 0.3.0 – 2026-08-09
 
-- A fő kártyák összecsukhatók.
-- A kártyák sorrendje átrendezhető és a böngésző megjegyzi.
-- Asztali gépen húzással, mobilon fel/le gombokkal rendezhető.
-- Alaphelyzet gomb az eredeti elrendezés visszaállításához.
-- Javítva a kártyák DOM-áthelyezésének sorrendje.
-- Javítva a helyszínválasztó összecsukása.
+- A kártyák fejléc- és tartalomszerkezete közvetlenül a HTML-ben van, nincs futásidejű DOM-átépítés.
+- A helyszínkártya stabil, mobilbarát elrendezést kapott.
+- A helyi idő és az UTC egyetlen teljes szélességű Idő kártyába került.
+- Minden fő kártya teljes szélességű, így átrendezéskor nem marad üres fél sor.
+- A kártyák külön elrejthetők és a beállításokból újra megjeleníthetők.
+- A rendezési és megjelenítési beállítások kompakt ikon mögé kerültek.
+- Az összecsukás és kinyitás szöveges gombjai piktogramokra cserélve.
+- Összecsukott helyszínkártyán rövid helynév vagy koordináta jelenik meg.
+- A sorrend, az összecsukás és a láthatóság böngészőnként megmarad.
 
 ## 0.2.0 – 2026-08-06
 

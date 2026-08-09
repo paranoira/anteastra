@@ -1,19 +1,23 @@
-const ORDER_KEY = "timee.card-order.v1";
-const COLLAPSED_KEY = "timee.card-collapsed.v1";
+const ORDER_KEY = "timee.card-order.v2";
+const COLLAPSED_KEY = "timee.card-collapsed.v2";
+const HIDDEN_KEY = "timee.card-hidden.v1";
+const LEGACY_ORDER_KEY = "timee.card-order.v1";
 
-const DEFAULT_ORDER = [
-  "location",
-  "weather",
-  "coordinates",
-  "local-time",
-  "utc-time",
-  "timezone"
-];
+const DEFAULT_ORDER = ["location", "weather", "coordinates", "time", "timezone"];
+
+const CARD_LABELS = {
+  location: "Helyszín",
+  weather: "Észlelési időjárás",
+  coordinates: "Koordináták",
+  time: "Idő",
+  timezone: "Időzóna"
+};
 
 function safeRead(key, fallback) {
   try {
-    const value = JSON.parse(localStorage.getItem(key));
-    return value ?? fallback;
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    return JSON.parse(raw) ?? fallback;
   } catch {
     return fallback;
   }
@@ -27,211 +31,237 @@ function safeWrite(key, value) {
   }
 }
 
-function getCardKey(card) {
-  if (card.id === "weather-card") return "weather";
-  if (card.classList.contains("action-card")) return "location";
-  return card.querySelector("h2[id]")?.id?.replace(/-title$/, "") || null;
-}
+function normalizeKeys(values) {
+  if (!Array.isArray(values)) return [];
+  const normalized = [];
 
-function getCardTitle(card) {
-  return card.querySelector("h2")?.textContent?.trim() || "Kártya";
-}
-
-function createButton(className, label, title) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = className;
-  button.textContent = label;
-  button.title = title;
-  button.setAttribute("aria-label", title);
-  return button;
-}
-
-function enhanceCard(card, collapsedKeys) {
-  const key = getCardKey(card);
-  if (!key) return null;
-
-  card.dataset.cardKey = key;
-  card.classList.add("layout-card");
-
-  if (["location", "weather", "coordinates", "timezone"].includes(key)) {
-    card.classList.add("layout-card-wide");
+  for (const value of values) {
+    const key = value === "local-time" || value === "utc-time" ? "time" : value;
+    if (DEFAULT_ORDER.includes(key) && !normalized.includes(key)) normalized.push(key);
   }
 
-  const titleText = getCardTitle(card);
-  const body = document.createElement("div");
-  body.className = "card-collapsible-content";
-  while (card.firstChild) body.append(card.firstChild);
-
-  const controls = document.createElement("div");
-  controls.className = "card-layout-controls";
-
-  const title = document.createElement("strong");
-  title.className = "card-layout-title";
-  title.textContent = titleText;
-
-  const actions = document.createElement("div");
-  actions.className = "card-layout-actions";
-
-  const drag = createButton("card-drag-button", "↕", `${titleText} mozgatása`);
-  const up = createButton("card-move-button", "↑", `${titleText} mozgatása felfelé`);
-  const down = createButton("card-move-button", "↓", `${titleText} mozgatása lefelé`);
-  const toggle = createButton("card-collapse-button", "Összecsukás", `${titleText} összecsukása`);
-
-  up.dataset.move = "up";
-  down.dataset.move = "down";
-  toggle.dataset.collapseToggle = "true";
-
-  actions.append(drag, up, down, toggle);
-  controls.append(title, actions);
-  card.append(controls, body);
-
-  setCollapsed(card, collapsedKeys.includes(key), false);
-  return card;
+  return normalized;
 }
 
-function setCollapsed(card, collapsed, persist = true) {
-  const body = card.querySelector(".card-collapsible-content");
-  const toggle = card.querySelector("[data-collapse-toggle]");
-  const title = card.querySelector(".card-layout-title")?.textContent || "Kártya";
+function getSavedOrder() {
+  const current = safeRead(ORDER_KEY, null);
+  if (Array.isArray(current)) return normalizeOrder(current);
 
-  card.classList.toggle("is-collapsed", collapsed);
-  body.hidden = collapsed;
-  toggle.textContent = collapsed ? "Kinyitás" : "Összecsukás";
-  toggle.setAttribute("aria-expanded", String(!collapsed));
-  toggle.setAttribute("aria-label", `${title} ${collapsed ? "kinyitása" : "összecsukása"}`);
-
-  if (persist) saveCollapsed(card.closest(".card-layout"));
+  const legacy = safeRead(LEGACY_ORDER_KEY, DEFAULT_ORDER);
+  const migrated = normalizeOrder(legacy);
+  safeWrite(ORDER_KEY, migrated);
+  return migrated;
 }
 
-function saveOrder(layout) {
-  const order = [...layout.querySelectorAll(".layout-card")].map((card) => card.dataset.cardKey);
-  safeWrite(ORDER_KEY, order);
-}
-
-function saveCollapsed(layout) {
-  const collapsed = [...layout.querySelectorAll(".layout-card.is-collapsed")].map((card) => card.dataset.cardKey);
-  safeWrite(COLLAPSED_KEY, collapsed);
-}
-
-function normalizeOrder(savedOrder, cards) {
-  const available = new Set(cards.map((card) => card.dataset.cardKey));
-  const valid = Array.isArray(savedOrder) ? savedOrder.filter((key) => available.has(key)) : [];
-  const missing = DEFAULT_ORDER.filter((key) => available.has(key) && !valid.includes(key));
+function normalizeOrder(values) {
+  const valid = normalizeKeys(values);
+  const missing = DEFAULT_ORDER.filter((key) => !valid.includes(key));
   return [...valid, ...missing];
 }
 
-function moveCard(card, direction) {
-  const layout = card.parentElement;
-  const sibling = direction === "up" ? card.previousElementSibling : card.nextElementSibling;
-  if (!sibling) return;
+function getCards(layout) {
+  return [...layout.querySelectorAll(":scope > .layout-card")];
+}
 
-  if (direction === "up") layout.insertBefore(card, sibling);
-  else layout.insertBefore(sibling, card);
+function getVisibleCards(layout) {
+  return getCards(layout).filter((card) => !card.hidden);
+}
+
+function saveOrder(layout) {
+  safeWrite(ORDER_KEY, getCards(layout).map((card) => card.dataset.cardKey));
+}
+
+function saveCollapsed(layout) {
+  safeWrite(
+    COLLAPSED_KEY,
+    getCards(layout)
+      .filter((card) => card.classList.contains("is-collapsed"))
+      .map((card) => card.dataset.cardKey)
+  );
+}
+
+function saveHidden(layout) {
+  safeWrite(
+    HIDDEN_KEY,
+    getCards(layout)
+      .filter((card) => card.hidden)
+      .map((card) => card.dataset.cardKey)
+  );
+}
+
+function cardLabel(card) {
+  return CARD_LABELS[card.dataset.cardKey] || card.querySelector("h2")?.textContent?.trim() || "Kártya";
+}
+
+function setCollapsed(card, collapsed, persist = true) {
+  const body = card.querySelector(":scope > .layout-card-body");
+  const button = card.querySelector("[data-collapse-toggle]");
+  if (!body || !button) return;
+
+  const label = cardLabel(card);
+  card.classList.toggle("is-collapsed", collapsed);
+  body.hidden = collapsed;
+  button.setAttribute("aria-expanded", String(!collapsed));
+  button.setAttribute("aria-label", `${label} ${collapsed ? "kinyitása" : "összecsukása"}`);
+  button.title = collapsed ? "Kinyitás" : "Összecsukás";
+
+  if (persist) saveCollapsed(card.parentElement);
+}
+
+function setCardVisible(layout, key, visible, persist = true) {
+  const card = layout.querySelector(`:scope > [data-card-key="${key}"]`);
+  if (!card) return;
+  card.hidden = !visible;
+
+  const checkbox = document.querySelector(`[data-card-visibility="${key}"]`);
+  if (checkbox) checkbox.checked = visible;
+
+  if (persist) saveHidden(layout);
+  updateMoveButtons(layout);
+  updateEmptyState(layout);
+}
+
+function updateEmptyState(layout) {
+  const empty = document.getElementById("card-layout-empty");
+  if (!empty) return;
+  empty.hidden = getVisibleCards(layout).length !== 0;
+}
+
+function applySavedState(layout) {
+  const order = getSavedOrder();
+  const collapsed = normalizeKeys(safeRead(COLLAPSED_KEY, []));
+  const hidden = normalizeKeys(safeRead(HIDDEN_KEY, []));
+
+  order.forEach((key) => {
+    const card = layout.querySelector(`:scope > [data-card-key="${key}"]`);
+    if (card) layout.append(card);
+  });
+
+  getCards(layout).forEach((card) => {
+    const key = card.dataset.cardKey;
+    setCollapsed(card, collapsed.includes(key), false);
+    setCardVisible(layout, key, !hidden.includes(key), false);
+  });
+
+  updateEmptyState(layout);
+}
+
+function moveCard(layout, card, direction) {
+  const cards = getVisibleCards(layout);
+  const index = cards.indexOf(card);
+  if (index < 0) return;
+
+  const targetIndex = direction === "up" ? index - 1 : index + 1;
+  const target = cards[targetIndex];
+  if (!target) return;
+
+  if (direction === "up") {
+    layout.insertBefore(card, target);
+  } else {
+    layout.insertBefore(card, target.nextElementSibling);
+  }
 
   saveOrder(layout);
   updateMoveButtons(layout);
 }
 
 function updateMoveButtons(layout) {
-  const cards = [...layout.querySelectorAll(".layout-card")];
+  const cards = getVisibleCards(layout);
+
   cards.forEach((card, index) => {
-    card.querySelector('[data-move="up"]').disabled = index === 0;
-    card.querySelector('[data-move="down"]').disabled = index === cards.length - 1;
+    const up = card.querySelector('[data-move="up"]');
+    const down = card.querySelector('[data-move="down"]');
+    if (up) up.disabled = index === 0;
+    if (down) down.disabled = index === cards.length - 1;
   });
 }
 
-function setArrangeMode(layout, toolbar, enabled) {
+function setArrangeMode(layout, enabled) {
+  const trigger = document.getElementById("layout-settings-button");
+  const arrangeButton = document.getElementById("layout-arrange-button");
+
+  document.body.dataset.layoutArranging = enabled ? "true" : "false";
   layout.classList.toggle("is-arranging", enabled);
-  const button = toolbar.querySelector("[data-arrange-toggle]");
-  button.setAttribute("aria-pressed", String(enabled));
-  button.textContent = enabled ? "Rendezés kész" : "Kártyák rendezése";
-  layout.querySelectorAll(".layout-card").forEach((card) => {
-    card.draggable = enabled;
+
+  getCards(layout).forEach((card) => {
+    card.draggable = enabled && !card.hidden;
   });
+
+  if (trigger) {
+    trigger.setAttribute("aria-pressed", String(enabled));
+    trigger.setAttribute("aria-label", enabled ? "Rendezés befejezése" : "Kártyák beállításai");
+    trigger.title = enabled ? "Rendezés befejezése" : "Kártyák beállításai";
+  }
+
+  if (arrangeButton) arrangeButton.textContent = enabled ? "Rendezés befejezése" : "Rendezés mód";
+  updateMoveButtons(layout);
 }
 
 function resetLayout(layout) {
   DEFAULT_ORDER.forEach((key) => {
-    const card = layout.querySelector(`[data-card-key="${key}"]`);
+    const card = layout.querySelector(`:scope > [data-card-key="${key}"]`);
     if (card) layout.append(card);
   });
 
-  layout.querySelectorAll(".layout-card").forEach((card) => setCollapsed(card, false, false));
+  getCards(layout).forEach((card) => {
+    setCollapsed(card, false, false);
+    setCardVisible(layout, card.dataset.cardKey, true, false);
+  });
+
   localStorage.removeItem(ORDER_KEY);
   localStorage.removeItem(COLLAPSED_KEY);
+  localStorage.removeItem(HIDDEN_KEY);
+  setArrangeMode(layout, false);
   updateMoveButtons(layout);
+  updateEmptyState(layout);
+}
+
+function openSettings(dialog) {
+  if (!dialog?.open) dialog?.showModal();
 }
 
 function initCardLayout() {
-  const main = document.querySelector("main");
-  const actionCard = main?.querySelector(":scope > .action-card");
-  const weatherCard = main?.querySelector(":scope > .weather-card");
-  const dashboard = main?.querySelector(":scope > .dashboard-grid");
-  const dataCards = dashboard
-    ? [...dashboard.children].filter((item) => item.classList.contains("data-card"))
-    : [];
+  const layout = document.getElementById("card-layout");
+  const dialog = document.getElementById("layout-settings-dialog");
+  const settingsButton = document.getElementById("layout-settings-button");
+  const closeButton = document.getElementById("layout-settings-close");
+  const arrangeButton = document.getElementById("layout-arrange-button");
+  const resetButton = document.getElementById("layout-reset-button");
+  const emptySettingsButton = document.getElementById("card-layout-empty-settings");
 
-  const sourceCards = [actionCard, weatherCard, ...dataCards].filter(Boolean);
-  if (!main || !sourceCards.length || main.querySelector(".card-layout")) return;
+  if (!layout || !dialog || !settingsButton) return;
 
-  const collapsedKeys = safeRead(COLLAPSED_KEY, []);
-  const cards = sourceCards.map((card) => enhanceCard(card, collapsedKeys)).filter(Boolean);
+  applySavedState(layout);
+  updateMoveButtons(layout);
+  setArrangeMode(layout, false);
 
-  const toolbar = document.createElement("div");
-  toolbar.className = "card-layout-toolbar";
-  toolbar.setAttribute("aria-label", "Kártyák beállításai");
-
-  const toolbarText = document.createElement("p");
-  toolbarText.textContent = "A sorrend és az összecsukott állapot ebben a böngészőben marad.";
-
-  const toolbarActions = document.createElement("div");
-  toolbarActions.className = "card-layout-toolbar-actions";
-
-  const arrangeButton = createButton(
-    "button button-secondary",
-    "Kártyák rendezése",
-    "Kártyák rendezésének bekapcsolása"
-  );
-  arrangeButton.dataset.arrangeToggle = "true";
-  arrangeButton.setAttribute("aria-pressed", "false");
-
-  const resetButton = createButton(
-    "button button-quiet",
-    "Alaphelyzet",
-    "Kártyák alaphelyzetének visszaállítása"
-  );
-  resetButton.dataset.layoutReset = "true";
-
-  toolbarActions.append(arrangeButton, resetButton);
-  toolbar.append(toolbarText, toolbarActions);
-
-  const layout = document.createElement("div");
-  layout.className = "card-layout";
-
-  const savedOrder = normalizeOrder(safeRead(ORDER_KEY, DEFAULT_ORDER), cards);
-
-  main.insertBefore(toolbar, actionCard);
-  main.insertBefore(layout, actionCard);
-
-  savedOrder.forEach((key) => {
-    const card = cards.find((item) => item.dataset.cardKey === key);
-    if (card) layout.append(card);
-  });
-
-  dashboard?.remove();
-
-  let arranging = false;
-  let draggedCard = null;
-
-  toolbar.addEventListener("click", (event) => {
-    if (event.target.closest("[data-arrange-toggle]")) {
-      arranging = !arranging;
-      setArrangeMode(layout, toolbar, arranging);
+  settingsButton.addEventListener("click", () => {
+    if (layout.classList.contains("is-arranging")) {
+      setArrangeMode(layout, false);
+      return;
     }
-
-    if (event.target.closest("[data-layout-reset]")) resetLayout(layout);
+    openSettings(dialog);
   });
+
+  closeButton?.addEventListener("click", () => dialog.close());
+  emptySettingsButton?.addEventListener("click", () => openSettings(dialog));
+
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+
+  dialog.querySelectorAll("[data-card-visibility]").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      setCardVisible(layout, checkbox.dataset.cardVisibility, checkbox.checked);
+    });
+  });
+
+  arrangeButton?.addEventListener("click", () => {
+    dialog.close();
+    setArrangeMode(layout, true);
+  });
+
+  resetButton?.addEventListener("click", () => resetLayout(layout));
 
   layout.addEventListener("click", (event) => {
     const card = event.target.closest(".layout-card");
@@ -242,27 +272,29 @@ function initCardLayout() {
       return;
     }
 
-    const move = event.target.closest("[data-move]")?.dataset.move;
-    if (move) moveCard(card, move);
+    const direction = event.target.closest("[data-move]")?.dataset.move;
+    if (direction) moveCard(layout, card, direction);
   });
+
+  let draggedCard = null;
 
   layout.addEventListener("dragstart", (event) => {
     const card = event.target.closest(".layout-card");
-    if (!arranging || !card) {
+    if (!layout.classList.contains("is-arranging") || !card || card.hidden) {
       event.preventDefault();
       return;
     }
 
     draggedCard = card;
     card.classList.add("is-dragging");
-    event.dataTransfer.effectAllowed = "move";
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
   });
 
   layout.addEventListener("dragover", (event) => {
     if (!draggedCard) return;
     event.preventDefault();
 
-    const target = event.target.closest(".layout-card");
+    const target = event.target.closest(".layout-card:not([hidden])");
     if (!target || target === draggedCard) return;
 
     const rect = target.getBoundingClientRect();
@@ -276,8 +308,6 @@ function initCardLayout() {
     saveOrder(layout);
     updateMoveButtons(layout);
   });
-
-  updateMoveButtons(layout);
 }
 
 if (document.readyState === "loading") {
