@@ -9,23 +9,24 @@ import "../styles/global.css";
     <meta name="theme-color" content="#07111f" />
     <meta
       name="description"
-      content="Timee – gyors hely-, idő- és időjárási segéd amatőr csillagászoknak."
+      content="AnteAstra – gyors hely-, idő- és időjárási segéd amatőr csillagászoknak."
     />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="stylesheet" href="/card-layout.css" />
-    <title>Timee – csillagászati gyorssegéd</title>
+    <link rel="stylesheet" href="/anteastra-ui.css" />
+    <title>AnteAstra – észlelési segéd amatőr csillagászoknak</title>
   </head>
   <body>
     <a class="skip-link" href="#main">Ugrás a tartalomhoz</a>
 
     <header class="site-header">
       <div class="shell header-inner">
-        <a class="brand" href="/" aria-label="Timee kezdőlap">
+        <a class="brand" href="/" aria-label="AnteAstra kezdőlap">
           <span class="brand-mark" aria-hidden="true">✦</span>
           <span>
-            <strong>Timee</strong>
-            <small>csillagászati gyorssegéd</small>
+            <strong>AnteAstra</strong>
+            <small>észlelési segéd</small>
           </span>
         </a>
 
@@ -34,6 +35,7 @@ import "../styles/global.css";
             <span>UTC</span>
             <strong id="header-utc">--:--:--</strong>
           </div>
+          <span id="mobile-layout-settings-slot" class="mobile-layout-settings-slot" aria-hidden="true"></span>
           <button class="icon-button" id="red-mode-button" type="button" aria-pressed="false">
             <span aria-hidden="true">●</span>
             <span class="button-label">Vörös mód</span>
@@ -44,15 +46,15 @@ import "../styles/global.css";
 
     <main id="main" class="shell main-content">
       <section class="intro" aria-labelledby="page-title">
-        <p class="eyebrow">Távcső-beállítás</p>
-        <h1 id="page-title">Hely, idő és észlelési időjárás egy képernyőn.</h1>
+        <p class="eyebrow">Észlelés előtt</p>
+        <h1 id="page-title">Készülj az észlelésre.</h1>
         <p>
-          GPS-helyzet, pontos koordináták, helyi és UTC-idő, valamint a következő
-          órák felhőzete, szele és harmatveszélye – gyorsan, egy helyen.
+          Hely, pontos idő és az észleléshez fontos időjárási adatok – gyorsan,
+          egy helyen, mielőtt az éjszakai ég alá indulsz.
         </p>
       </section>
 
-      <div class="layout-tools">
+      <div id="desktop-layout-settings-slot" class="layout-tools">
         <button
           id="layout-settings-button"
           class="layout-settings-trigger"
@@ -143,7 +145,7 @@ import "../styles/global.css";
             <div class="location-card-intro">
               <p class="muted">
                 A böngésző csak gombnyomásra kér helyhozzáférést. A helyzetet nem küldjük
-                a Timee szerverére.
+                az AnteAstra szerverére.
               </p>
             </div>
             <div class="primary-actions">
@@ -412,6 +414,17 @@ import "../styles/global.css";
         az Open-Meteo szolgáltatás kapja meg.
       </aside>
 
+      <section class="about-name" aria-labelledby="about-name-title">
+        <p class="eyebrow">A név mögött</p>
+        <h2 id="about-name-title">Miért AnteAstra?</h2>
+        <p>
+          Az <strong>AnteAstra</strong> név a latin <em>ante</em> („előtt”) és
+          <em>astra</em> („csillagok”) szavakból született. Szabad értelmezésben:
+          <strong>„a csillagok előtt”</strong> – mindaz, amit érdemes ellenőrizni,
+          mielőtt az éjszakai ég alá indulsz.
+        </p>
+      </section>
+
       <section class="coming-next" aria-labelledby="next-title">
         <p class="eyebrow">Következő lépések</p>
         <h2 id="next-title">Erre épül majd a teljes észlelési gyorspanel.</h2>
@@ -426,7 +439,7 @@ import "../styles/global.css";
 
     <footer class="site-footer">
       <div class="shell">
-        <span>Timee</span>
+        <span>AnteAstra</span>
         <span>Gyors segéd amatőr csillagászoknak.</span>
       </div>
     </footer>
@@ -436,5 +449,6 @@ import "../styles/global.css";
       initApp();
     </script>
     <script is:inline src="/card-layout.js"></script>
+    <script is:inline src="/anteastra-ui.js"></script>
   </body>
 </html>

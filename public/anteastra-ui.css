@@ -1,0 +1,96 @@
+.mobile-layout-settings-slot {
+  display: none;
+}
+
+.intro {
+  max-width: 720px;
+}
+
+.intro h1 {
+  max-width: 17ch;
+  font-size: clamp(2.05rem, 5vw, 3.7rem);
+  line-height: 1.03;
+}
+
+.about-name {
+  margin-top: 1.25rem;
+  padding: clamp(1.2rem, 3vw, 1.8rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface), transparent 20%);
+}
+
+.about-name h2 {
+  margin-bottom: 0.65rem;
+}
+
+.about-name > p:last-child {
+  max-width: 72ch;
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+.about-name strong {
+  color: var(--text);
+}
+
+@media (max-width: 760px) {
+  .site-header {
+    position: sticky;
+    top: 0;
+  }
+
+  .header-inner {
+    min-height: 60px;
+  }
+
+  .header-tools {
+    gap: 0.4rem;
+  }
+
+  .brand {
+    gap: 0.5rem;
+  }
+
+  .brand-mark {
+    font-size: 1.55rem;
+  }
+
+  .brand strong {
+    font-size: 1.08rem;
+  }
+
+  .mobile-layout-settings-slot {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .mobile-layout-settings-slot .layout-settings-trigger {
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+  }
+
+  .layout-tools {
+    min-height: 0;
+    margin: 0;
+  }
+
+  .intro {
+    margin-bottom: 1.35rem;
+  }
+
+  .intro h1 {
+    max-width: 18ch;
+    font-size: clamp(1.9rem, 8.5vw, 2.65rem);
+    line-height: 1.06;
+  }
+
+  .intro > p:last-child {
+    font-size: 0.98rem;
+  }
+
+  .main-content {
+    padding-top: 1.15rem;
+  }
+}
