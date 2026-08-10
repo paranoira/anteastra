@@ -35,11 +35,7 @@
 }
 
 @media (max-width: 760px) {
-  .site-header {
-    position: sticky;
-    top: 0;
-  }
-
+  
   .header-inner {
     min-height: 60px;
   }
