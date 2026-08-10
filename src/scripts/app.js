@@ -700,7 +700,7 @@ function getSetupText() {
     : "nincs adat";
 
   return [
-    "TIMEE – TÁVCSŐ-BEÁLLÍTÁS",
+    "ANTEASTRA – ÉSZLELÉSI BEÁLLÍTÁS",
     `Koordináták: ${getDecimalText()}`,
     `DMS: ${getDmsText()}`,
     `Magasság: ${elevation}`,
