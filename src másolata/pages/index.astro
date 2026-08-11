@@ -1,0 +1,454 @@
+---
+import "../styles/global.css";
+---
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#07111f" />
+    <meta
+      name="description"
+      content="AnteAstra – gyors hely-, idő- és időjárási segéd amatőr csillagászoknak."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="/card-layout.css" />
+    <link rel="stylesheet" href="/anteastra-ui.css" />
+    <title>AnteAstra – észlelési segéd amatőr csillagászoknak</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Ugrás a tartalomhoz</a>
+
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="brand" href="/" aria-label="AnteAstra kezdőlap">
+          <span class="brand-mark" aria-hidden="true">✦</span>
+          <span>
+            <strong>AnteAstra</strong>
+            <small>észlelési segéd</small>
+          </span>
+        </a>
+
+        <div class="header-tools">
+          <div class="utc-clock" aria-label="Aktuális UTC idő">
+            <span>UTC</span>
+            <strong id="header-utc">--:--:--</strong>
+          </div>
+          <span id="mobile-layout-settings-slot" class="mobile-layout-settings-slot" aria-hidden="true"></span>
+          <button class="icon-button" id="red-mode-button" type="button" aria-pressed="false">
+            <span aria-hidden="true">●</span>
+            <span class="button-label">Vörös mód</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="shell main-content">
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">Észlelés előtt</p>
+        <h1 id="page-title">Készülj az észlelésre.</h1>
+        <p>
+          Hely, pontos idő és az észleléshez fontos időjárási adatok – gyorsan,
+          egy helyen, mielőtt az éjszakai ég alá indulsz.
+        </p>
+      </section>
+
+      <div id="desktop-layout-settings-slot" class="layout-tools">
+        <button
+          id="layout-settings-button"
+          class="layout-settings-trigger"
+          type="button"
+          aria-label="Kártyák beállításai"
+          title="Kártyák beállításai"
+          aria-haspopup="dialog"
+          aria-controls="layout-settings-dialog"
+          aria-pressed="false"
+        >
+          <svg class="layout-icon layout-icon-settings" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M8 14v6" />
+          </svg>
+          <svg class="layout-icon layout-icon-done" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m5 12 4 4L19 6" />
+          </svg>
+        </button>
+      </div>
+
+      <dialog id="layout-settings-dialog" class="layout-settings-dialog" aria-labelledby="layout-settings-title">
+        <div class="layout-settings-panel">
+          <div class="layout-settings-header">
+            <div>
+              <p class="eyebrow">Felület</p>
+              <h2 id="layout-settings-title">Kártyák beállításai</h2>
+            </div>
+            <button
+              id="layout-settings-close"
+              class="layout-dialog-close"
+              type="button"
+              aria-label="Bezárás"
+              title="Bezárás"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+            </button>
+          </div>
+
+          <p class="layout-settings-help">
+            Válaszd ki, mely kártyák legyenek láthatók. A sorrend és a megjelenítés ebben a böngészőben marad.
+          </p>
+
+          <div class="layout-visibility-list" aria-label="Megjelenített kártyák">
+            <label><input type="checkbox" data-card-visibility="location" checked /> <span>Helyszín</span></label>
+            <label><input type="checkbox" data-card-visibility="weather" checked /> <span>Észlelési időjárás</span></label>
+            <label><input type="checkbox" data-card-visibility="coordinates" checked /> <span>Koordináták</span></label>
+            <label><input type="checkbox" data-card-visibility="time" checked /> <span>Idő</span></label>
+            <label><input type="checkbox" data-card-visibility="timezone" checked /> <span>Időzóna</span></label>
+          </div>
+
+          <div class="layout-settings-actions">
+            <button id="layout-arrange-button" class="button button-secondary" type="button">
+              Rendezés mód
+            </button>
+            <button id="layout-reset-button" class="button button-quiet" type="button">
+              Alaphelyzet
+            </button>
+          </div>
+        </div>
+      </dialog>
+
+      <div id="card-layout" class="card-layout">
+        <section class="action-card layout-card" data-card-key="location" aria-labelledby="location-title">
+          <header class="layout-card-header">
+            <div class="layout-card-heading">
+              <span class="layout-drag-handle" data-layout-reorder-control title="Kártya húzása" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
+              </span>
+              <div class="layout-card-title-block">
+                <p class="eyebrow">Észlelőhely</p>
+                <h2 id="location-title">Helyszín</h2>
+                <span id="location-card-summary" class="card-collapsed-summary">Nincs kiválasztott helyszín</span>
+              </div>
+            </div>
+            <div class="layout-card-header-actions">
+              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label="Helyszín mozgatása felfelé" title="Mozgatás felfelé">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label="Helyszín mozgatása lefelé" title="Mozgatás lefelé">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+              </button>
+              <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-location" aria-label="Helyszín összecsukása" title="Összecsukás">
+                <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+            </div>
+          </header>
+
+          <div id="card-body-location" class="layout-card-body location-card-body">
+            <div class="location-card-intro">
+              <p class="muted">
+                A böngésző csak gombnyomásra kér helyhozzáférést. A helyzetet nem küldjük
+                az AnteAstra szerverére.
+              </p>
+            </div>
+            <div class="primary-actions">
+              <button class="button button-primary" id="gps-button" type="button">
+                <span aria-hidden="true">⌖</span>
+                Helyzetem használata
+              </button>
+              <button class="button button-secondary" id="toggle-manual-button" type="button" aria-expanded="false" aria-controls="manual-location">
+                Koordináták megadása
+              </button>
+            </div>
+
+            <form id="manual-location" class="manual-form" hidden>
+              <label>
+                Szélesség
+                <input id="latitude-input" name="latitude" type="number" min="-90" max="90" step="any" inputmode="decimal" placeholder="47.5480" required />
+              </label>
+              <label>
+                Hosszúság
+                <input id="longitude-input" name="longitude" type="number" min="-180" max="180" step="any" inputmode="decimal" placeholder="18.7200" required />
+              </label>
+              <button class="button button-primary" type="submit">Helyszín alkalmazása</button>
+            </form>
+
+            <p id="status-message" class="status" role="status" aria-live="polite">
+              Még nincs kiválasztott helyszín.
+            </p>
+          </div>
+        </section>
+
+        <section id="weather-card" class="weather-card layout-card" data-card-key="weather" aria-labelledby="weather-title">
+          <header class="layout-card-header">
+            <div class="layout-card-heading">
+              <span class="layout-drag-handle" data-layout-reorder-control title="Kártya húzása" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
+              </span>
+              <div class="layout-card-title-block">
+                <p class="eyebrow">Következő 12 óra</p>
+                <h2 id="weather-title">Észlelési időjárás</h2>
+              </div>
+            </div>
+            <div class="layout-card-header-actions weather-card-header-actions">
+              <span id="weather-status-badge" class="weather-status" data-state="idle">Nincs adat</span>
+              <button class="card-icon-button" id="refresh-weather-button" type="button" disabled aria-label="Időjárás frissítése" title="Frissítés">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M6.5 9a7 7 0 0 1 11.5-2.5L20 11M4 13l2 4.5A7 7 0 0 0 17.5 15" /></svg>
+              </button>
+              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label="Időjárás mozgatása felfelé" title="Mozgatás felfelé">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label="Időjárás mozgatása lefelé" title="Mozgatás lefelé">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+              </button>
+              <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-weather" aria-label="Időjárás összecsukása" title="Összecsukás">
+                <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+            </div>
+          </header>
+
+          <div id="card-body-weather" class="layout-card-body">
+            <p id="weather-summary" class="weather-summary">
+              Válassz helyszínt az előrejelzéshez.
+            </p>
+
+            <div class="weather-metrics" aria-label="Aktuális időjárási adatok">
+              <article class="weather-metric">
+                <span>Állapot</span>
+                <strong id="weather-condition">—</strong>
+                <small>Modell szerinti aktuális helyzet</small>
+              </article>
+              <article class="weather-metric">
+                <span>Felhőzet</span>
+                <strong id="weather-cloud">—</strong>
+                <small id="weather-cloud-layers">Alacsony / közép / magas: —</small>
+              </article>
+              <article class="weather-metric">
+                <span>Hőmérséklet</span>
+                <strong id="weather-temperature">—</strong>
+                <small>A kiválasztott helyen</small>
+              </article>
+              <article class="weather-metric">
+                <span>Szél</span>
+                <strong id="weather-wind">—</strong>
+                <small id="weather-wind-detail">Széllökés: —</small>
+              </article>
+              <article class="weather-metric">
+                <span>Páratartalom</span>
+                <strong id="weather-humidity">—</strong>
+                <small id="weather-dewpoint">Harmatpont: —</small>
+              </article>
+              <article class="weather-metric weather-metric-dew">
+                <span>Harmatveszély</span>
+                <strong id="weather-dew-risk" data-state="unknown">—</strong>
+                <small>A hőmérséklet és a harmatpont közelsége alapján</small>
+              </article>
+            </div>
+
+            <div id="weather-hourly" class="weather-hourly" role="list" aria-label="Órás előrejelzés">
+              <p class="weather-empty">Válassz helyszínt az előrejelzéshez.</p>
+            </div>
+
+            <div class="weather-footer">
+              <p id="weather-updated">—</p>
+              <p>Az összegzés felhőzet, csapadékesély és szél alapján készült; a helyi viszonyok eltérhetnek.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="data-card layout-card" data-card-key="coordinates" aria-labelledby="coordinates-title">
+          <header class="layout-card-header">
+            <div class="layout-card-heading">
+              <span class="layout-drag-handle" data-layout-reorder-control title="Kártya húzása" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
+              </span>
+              <div class="layout-card-title-block">
+                <p class="eyebrow">Pozíció</p>
+                <h2 id="coordinates-title">Koordináták</h2>
+              </div>
+            </div>
+            <div class="layout-card-header-actions">
+              <span id="location-source" class="badge">Nincs adat</span>
+              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label="Koordináták mozgatása felfelé" title="Mozgatás felfelé">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label="Koordináták mozgatása lefelé" title="Mozgatás lefelé">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+              </button>
+              <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-coordinates" aria-label="Koordináták összecsukása" title="Összecsukás">
+                <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+            </div>
+          </header>
+
+          <div id="card-body-coordinates" class="layout-card-body">
+            <dl class="data-list coordinates-list">
+              <div>
+                <dt>Decimális fok</dt>
+                <dd id="decimal-coordinates">—</dd>
+              </div>
+              <div>
+                <dt>Fok–perc–másodperc</dt>
+                <dd id="dms-coordinates">—</dd>
+              </div>
+              <div>
+                <dt>GPS-pontosság</dt>
+                <dd id="accuracy-value">—</dd>
+              </div>
+              <div>
+                <dt>Tengerszint feletti magasság</dt>
+                <dd id="elevation-value">—</dd>
+              </div>
+            </dl>
+
+            <div class="card-actions">
+              <button class="button button-quiet" id="copy-decimal-button" type="button" disabled>
+                Decimális másolása
+              </button>
+              <button class="button button-quiet" id="copy-dms-button" type="button" disabled>
+                DMS másolása
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="data-card layout-card" data-card-key="time" aria-labelledby="time-title">
+          <header class="layout-card-header">
+            <div class="layout-card-heading">
+              <span class="layout-drag-handle" data-layout-reorder-control title="Kártya húzása" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
+              </span>
+              <div class="layout-card-title-block">
+                <p class="eyebrow">Időadatok</p>
+                <h2 id="time-title">Idő</h2>
+              </div>
+            </div>
+            <div class="layout-card-header-actions">
+              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label="Idő mozgatása felfelé" title="Mozgatás felfelé">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label="Idő mozgatása lefelé" title="Mozgatás lefelé">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+              </button>
+              <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-time" aria-label="Idő összecsukása" title="Összecsukás">
+                <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+            </div>
+          </header>
+
+          <div id="card-body-time" class="layout-card-body">
+            <div class="time-card-grid">
+              <article class="time-panel" aria-labelledby="local-time-title">
+                <p class="eyebrow">Kiválasztott hely</p>
+                <h3 id="local-time-title">Helyi idő</h3>
+                <time id="local-clock" class="large-clock">--:--:--</time>
+                <p id="local-date" class="date-line">—</p>
+              </article>
+              <article class="time-panel" aria-labelledby="utc-time-title">
+                <p class="eyebrow">Egyezményes világidő</p>
+                <h3 id="utc-time-title">UTC</h3>
+                <time id="utc-clock" class="large-clock">--:--:--</time>
+                <p id="utc-date" class="date-line">—</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="data-card layout-card" data-card-key="timezone" aria-labelledby="timezone-title">
+          <header class="layout-card-header">
+            <div class="layout-card-heading">
+              <span class="layout-drag-handle" data-layout-reorder-control title="Kártya húzása" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
+              </span>
+              <div class="layout-card-title-block">
+                <p class="eyebrow">Időbeállítás</p>
+                <h2 id="timezone-title">Időzóna</h2>
+              </div>
+            </div>
+            <div class="layout-card-header-actions">
+              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label="Időzóna mozgatása felfelé" title="Mozgatás felfelé">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label="Időzóna mozgatása lefelé" title="Mozgatás lefelé">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+              </button>
+              <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-timezone" aria-label="Időzóna összecsukása" title="Összecsukás">
+                <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+            </div>
+          </header>
+
+          <div id="card-body-timezone" class="layout-card-body">
+            <dl class="data-list timezone-list">
+              <div>
+                <dt>IANA időzóna</dt>
+                <dd id="timezone-name">—</dd>
+              </div>
+              <div>
+                <dt>UTC-eltérés</dt>
+                <dd id="utc-offset">—</dd>
+              </div>
+              <div>
+                <dt>Rövidítés</dt>
+                <dd id="timezone-abbreviation">—</dd>
+              </div>
+              <div>
+                <dt>Nyári időszámítás</dt>
+                <dd id="dst-status">—</dd>
+              </div>
+            </dl>
+            <div class="card-actions">
+              <button class="button button-quiet" id="copy-setup-button" type="button" disabled>
+                Teljes beállítás másolása
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div id="card-layout-empty" class="card-layout-empty" hidden>
+        <p>Minden kártya el van rejtve.</p>
+        <button id="card-layout-empty-settings" class="button button-secondary" type="button">Kártyák megjelenítése</button>
+      </div>
+
+      <aside class="privacy-note">
+        <strong>Adatkezelés:</strong> a mentett helyszín csak ebben a böngészőben marad.
+        Az időzóna, a becsült magasság és az időjárás meghatározásához a koordinátát
+        az Open-Meteo szolgáltatás kapja meg.
+      </aside>
+
+      <section class="about-name" aria-labelledby="about-name-title">
+        <p class="eyebrow">A név mögött</p>
+        <h2 id="about-name-title">Miért AnteAstra?</h2>
+        <p>
+          Az <strong>AnteAstra</strong> név a latin <em>ante</em> („előtt”) és
+          <em>astra</em> („csillagok”) szavakból született. Szabad értelmezésben:
+          <strong>„a csillagok előtt”</strong> – mindaz, amit érdemes ellenőrizni,
+          mielőtt az éjszakai ég alá indulsz.
+        </p>
+      </section>
+
+      <section class="coming-next" aria-labelledby="next-title">
+        <p class="eyebrow">Következő lépések</p>
+        <h2 id="next-title">Erre épül majd a teljes észlelési gyorspanel.</h2>
+        <div class="feature-chips" aria-label="Tervezett funkciók">
+          <span>Napnyugta és szürkület</span>
+          <span>Holdfázis és holdkelte</span>
+          <span>Seeing és átlátszóság</span>
+          <span>Mentett észlelőhelyek</span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell">
+        <span>AnteAstra</span>
+        <span>Gyors segéd amatőr csillagászoknak.</span>
+      </div>
+    </footer>
+
+    <script>
+      import { initApp } from "../scripts/app.js";
+      initApp();
+    </script>
+    <script is:inline src="/card-layout.js"></script>
+    <script is:inline src="/anteastra-ui.js"></script>
+  </body>
+</html>
