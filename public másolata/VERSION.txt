@@ -1,2 +1,0 @@
-Timee v0.3.0
-Build for https://timee.hu
