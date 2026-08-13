@@ -1,5 +1,9 @@
+import { getLocale, runtime } from "../i18n/translations.js";
+
 const STORAGE_KEY = "timee.location.v1";
 const THEME_KEY = "timee.theme.v1";
+const locale = getLocale();
+const t = runtime[locale];
 
 const state = {
   location: null,
@@ -43,9 +47,9 @@ function bindEvents() {
   ui.toggleManualButton.addEventListener("click", toggleManualForm);
   ui.manualLocation.addEventListener("submit", applyManualLocation);
   ui.refreshWeatherButton.addEventListener("click", refreshWeather);
-  ui.copyDecimalButton.addEventListener("click", () => copyValue(getDecimalText(), "A decimális koordinátát kimásoltam."));
-  ui.copyDmsButton.addEventListener("click", () => copyValue(getDmsText(), "A DMS-koordinátát kimásoltam."));
-  ui.copySetupButton.addEventListener("click", () => copyValue(getSetupText(), "A teljes távcső-beállítást kimásoltam."));
+  ui.copyDecimalButton.addEventListener("click", () => copyValue(getDecimalText(), t.copyDecimalSuccess));
+  ui.copyDmsButton.addEventListener("click", () => copyValue(getDmsText(), t.copyDmsSuccess));
+  ui.copySetupButton.addEventListener("click", () => copyValue(getSetupText(), t.copySetupSuccess));
 }
 
 function toCamel(value) {
@@ -83,11 +87,11 @@ function toggleManualForm() {
 
 async function requestGpsLocation() {
   if (!navigator.geolocation) {
-    setStatus("Ez a böngésző nem támogatja a helymeghatározást.", "error");
+    setStatus(t.geoUnsupported, "error");
     return;
   }
 
-  setStatus("Helyzet meghatározása…", "loading");
+  setStatus(t.locating, "loading");
   ui.gpsButton.disabled = true;
 
   navigator.geolocation.getCurrentPosition(
@@ -103,18 +107,9 @@ async function requestGpsLocation() {
     },
     (error) => {
       ui.gpsButton.disabled = false;
-      const messages = {
-        1: "A helyhozzáférést nem engedélyezted. Add meg kézzel a koordinátát, vagy engedélyezd a böngésző beállításaiban.",
-        2: "A készülék most nem tudta meghatározni a helyzetet.",
-        3: "A helymeghatározás túl sokáig tartott. Próbáld újra szabad ég alatt."
-      };
-      setStatus(messages[error.code] || "Ismeretlen helymeghatározási hiba történt.", "error");
+      setStatus(t.geoErrors[error.code] || t.geoUnknown, "error");
     },
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 300000
-    }
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 300000 }
   );
 }
 
@@ -124,14 +119,15 @@ async function applyManualLocation(event) {
   const longitude = Number(ui.longitudeInput.value.replace?.(",", ".") ?? ui.longitudeInput.value);
 
   if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
-    setStatus("A szélességnek −90 és +90 fok közé kell esnie.", "error");
+    setStatus(t.latitudeInvalid, "error");
     return;
   }
   if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
-    setStatus("A hosszúságnak −180 és +180 fok közé kell esnie.", "error");
+    setStatus(t.longitudeInvalid, "error");
     return;
   }
 
+  // Legacy value kept for compatibility with locations already saved in localStorage.
   await setLocation({ latitude, longitude, accuracy: null, gpsAltitude: null, source: "Kézi" });
   ui.manualLocation.hidden = true;
   ui.toggleManualButton.setAttribute("aria-expanded", "false");
@@ -147,8 +143,8 @@ async function setLocation(location, options = {}) {
   state.weather = null;
   renderLocation();
   resetLocationTimeUi();
-  resetWeatherUi("Az előrejelzés betöltése…", "loading");
-  setStatus(options.restored ? "A mentett helyszín adatainak frissítése…" : "Időzóna, magasság és időjárás lekérése…", "loading");
+  resetWeatherUi(t.forecastLoading, "loading");
+  setStatus(options.restored ? t.restoredLoading : t.dataLoading, "loading");
 
   try {
     const locationData = await fetchLocationData(
@@ -156,7 +152,6 @@ async function setLocation(location, options = {}) {
       location.longitude,
       state.locationAbortController.signal
     );
-
     if (requestId !== state.locationRequestId) return;
 
     state.timezone = locationData.timezone;
@@ -168,7 +163,7 @@ async function setLocation(location, options = {}) {
 
     persistLocation();
     renderAll();
-    setStatus("A helyszín, a helyi idő és az előrejelzés frissült.", "success");
+    setStatus(t.locationUpdated, "success");
   } catch (error) {
     if (error?.name === "AbortError" || requestId !== state.locationRequestId) return;
 
@@ -177,9 +172,9 @@ async function setLocation(location, options = {}) {
     state.location.elevation = Number.isFinite(location.gpsAltitude) ? location.gpsAltitude : null;
     state.location.elevationSource = Number.isFinite(location.gpsAltitude) ? "GPS" : null;
     renderLocation();
-    resetLocationTimeUi("Az időzóna nem tölthető be");
-    resetWeatherUi("Az előrejelzés most nem érhető el.", "error");
-    setStatus("Az adatlekérés nem sikerült. Próbáld újra; nem mutatunk helyette régi vagy téves adatot.", "error");
+    resetLocationTimeUi(t.timezoneUnavailable);
+    resetWeatherUi(t.forecastUnavailable, "error");
+    setStatus(t.fetchFailed, "error");
     console.error(error);
   }
 }
@@ -194,30 +189,13 @@ async function fetchLocationData(latitude, longitude, signal) {
     latitude: latitude.toFixed(6),
     longitude: longitude.toFixed(6),
     current: [
-      "temperature_2m",
-      "relative_humidity_2m",
-      "dew_point_2m",
-      "precipitation",
-      "weather_code",
-      "cloud_cover",
-      "wind_speed_10m",
-      "wind_direction_10m",
-      "wind_gusts_10m"
+      "temperature_2m", "relative_humidity_2m", "dew_point_2m", "precipitation",
+      "weather_code", "cloud_cover", "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m"
     ].join(","),
     hourly: [
-      "temperature_2m",
-      "relative_humidity_2m",
-      "dew_point_2m",
-      "precipitation_probability",
-      "precipitation",
-      "weather_code",
-      "cloud_cover",
-      "cloud_cover_low",
-      "cloud_cover_mid",
-      "cloud_cover_high",
-      "wind_speed_10m",
-      "wind_direction_10m",
-      "wind_gusts_10m"
+      "temperature_2m", "relative_humidity_2m", "dew_point_2m", "precipitation_probability",
+      "precipitation", "weather_code", "cloud_cover", "cloud_cover_low", "cloud_cover_mid",
+      "cloud_cover_high", "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m"
     ].join(","),
     timezone: "auto",
     forecast_days: "2",
@@ -231,10 +209,10 @@ async function fetchLocationData(latitude, longitude, signal) {
     cache: "no-store",
     signal
   });
+  if (!response.ok) throw new Error(t.apiError(response.status));
 
-  if (!response.ok) throw new Error(`Open-Meteo hiba: ${response.status}`);
   const data = await response.json();
-  if (!data.timezone) throw new Error("Hiányzó időzónaadat.");
+  if (!data.timezone) throw new Error(t.missingTimezone);
 
   return {
     timezone: {
@@ -278,7 +256,6 @@ function normalizeWeather(data) {
 
   const current = data.current || {};
   const matchingHour = hours[0] || {};
-
   return {
     fetchedAt: new Date().toISOString(),
     current: {
@@ -310,7 +287,7 @@ function persistLocation() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ location: state.location, timezone: state.timezone }));
   } catch (error) {
-    console.warn("A helyszín mentése nem sikerült.", error);
+    console.warn(t.saveWarning, error);
   }
 }
 
@@ -331,7 +308,7 @@ function renderAll() {
   renderWeather();
 }
 
-function resetLocationTimeUi(message = "Időzóna lekérése…") {
+function resetLocationTimeUi(message = t.timezoneLoading) {
   ui.localClock.textContent = "--:--:--";
   ui.localDate.textContent = message;
   ui.timezoneName.textContent = "—";
@@ -341,18 +318,18 @@ function resetLocationTimeUi(message = "Időzóna lekérése…") {
   ui.copySetupButton.disabled = true;
 }
 
-function resetWeatherUi(message = "Válassz helyszínt az előrejelzéshez.", stateName = "idle") {
-  ui.weatherStatusBadge.textContent = stateName === "loading" ? "Betöltés" : stateName === "error" ? "Hiba" : "Nincs adat";
+function resetWeatherUi(message = t.chooseLocation, stateName = "idle") {
+  ui.weatherStatusBadge.textContent = stateName === "loading" ? t.loading : stateName === "error" ? t.error : t.noData;
   ui.weatherStatusBadge.dataset.state = stateName;
   ui.weatherSummary.textContent = message;
   ui.weatherCondition.textContent = "—";
   ui.weatherCloud.textContent = "—";
-  ui.weatherCloudLayers.textContent = "Alacsony / közép / magas: —";
+  ui.weatherCloudLayers.textContent = t.cloudLayersEmpty;
   ui.weatherTemperature.textContent = "—";
   ui.weatherWind.textContent = "—";
-  ui.weatherWindDetail.textContent = "Széllökés: —";
+  ui.weatherWindDetail.textContent = t.gustEmpty;
   ui.weatherHumidity.textContent = "—";
-  ui.weatherDewpoint.textContent = "Harmatpont: —";
+  ui.weatherDewpoint.textContent = t.dewPointEmpty;
   ui.weatherDewRisk.textContent = "—";
   ui.weatherHourly.replaceChildren(createEmptyHourlyMessage(message));
   ui.weatherUpdated.textContent = "—";
@@ -370,15 +347,13 @@ function renderLocation() {
   const location = state.location;
   if (!location) return;
 
-  ui.locationSource.textContent = location.source === "GPS" ? "GPS-helyzet" : "Kézi helyszín";
-  if (ui.locationCardSummary) {
-    ui.locationCardSummary.textContent = getShortLocationText(location);
-  }
+  ui.locationSource.textContent = location.source === "GPS" ? t.gpsLocation : t.manualLocation;
+  if (ui.locationCardSummary) ui.locationCardSummary.textContent = getShortLocationText(location);
   ui.decimalCoordinates.textContent = getDecimalText();
   ui.dmsCoordinates.textContent = getDmsText();
   ui.accuracyValue.textContent = Number.isFinite(location.accuracy)
     ? `±${Math.round(location.accuracy)} m`
-    : "Kézi koordináta";
+    : t.manualCoordinate;
 
   if (Number.isFinite(location.elevation)) {
     ui.elevationValue.textContent = `${Math.round(location.elevation)} m (${location.elevationSource})`;
@@ -403,9 +378,7 @@ function renderTimezone() {
   ui.timezoneName.textContent = timezone.name;
   ui.utcOffset.textContent = formatOffset(offsetSeconds);
   ui.timezoneAbbreviation.textContent = getTimezoneAbbreviation(now, timezone.name);
-  ui.dstStatus.textContent = dst.observes
-    ? (dst.active ? "Aktív" : "Nem aktív")
-    : "Nincs óraátállítás";
+  ui.dstStatus.textContent = dst.observes ? (dst.active ? t.dstActive : t.dstInactive) : t.dstNone;
   ui.copySetupButton.disabled = false;
 }
 
@@ -425,22 +398,26 @@ function renderWeather() {
   ui.weatherSummary.textContent = summary.text;
   ui.weatherCondition.textContent = weatherCodeText(current.weatherCode);
   ui.weatherCloud.textContent = formatPercent(current.cloudCover);
-  ui.weatherCloudLayers.textContent = `Alacsony ${formatPercent(current.cloudLow)} · közép ${formatPercent(current.cloudMid)} · magas ${formatPercent(current.cloudHigh)}`;
+  ui.weatherCloudLayers.textContent = t.cloudLayers(
+    formatPercent(current.cloudLow),
+    formatPercent(current.cloudMid),
+    formatPercent(current.cloudHigh)
+  );
   ui.weatherTemperature.textContent = formatTemperature(current.temperature);
   ui.weatherWind.textContent = `${formatSpeed(current.windSpeed)} ${windDirectionText(current.windDirection)}`.trim();
-  ui.weatherWindDetail.textContent = `Széllökés: ${formatSpeed(current.windGusts)}`;
+  ui.weatherWindDetail.textContent = t.gust(formatSpeed(current.windGusts));
   ui.weatherHumidity.textContent = formatPercent(current.humidity);
-  ui.weatherDewpoint.textContent = `Harmatpont: ${formatTemperature(current.dewPoint)}`;
+  ui.weatherDewpoint.textContent = t.dewPoint(formatTemperature(current.dewPoint));
   ui.weatherDewRisk.textContent = dew.text;
   ui.weatherDewRisk.dataset.state = dew.state;
   ui.weatherHourly.replaceChildren(...buildHourlyCards(weather.hours));
-  ui.weatherUpdated.textContent = `Frissítve: ${formatDateTime(new Date(weather.fetchedAt), state.timezone?.name || "UTC")} · Forrás: Open-Meteo`;
+  ui.weatherUpdated.textContent = t.updated(formatDateTime(new Date(weather.fetchedAt), state.timezone?.name || "UTC"));
   ui.refreshWeatherButton.disabled = false;
 }
 
 function buildHourlyCards(hours) {
   const selected = hours.filter((_, index) => index % 2 === 0).slice(0, 6);
-  if (!selected.length) return [createEmptyHourlyMessage("Nincs elérhető órás előrejelzés.")];
+  if (!selected.length) return [createEmptyHourlyMessage(t.hourlyEmpty)];
 
   return selected.map((hour, index) => {
     const article = document.createElement("article");
@@ -449,27 +426,27 @@ function buildHourlyCards(hours) {
 
     const heading = document.createElement("div");
     heading.className = "weather-hour-heading";
-
     const time = document.createElement("time");
     time.dateTime = hour.time;
     time.textContent = formatHourlyLabel(hour.time, index === 0);
-
     const condition = document.createElement("span");
     condition.textContent = weatherCodeText(hour.weatherCode);
-
     heading.append(time, condition);
 
-    const cloudRow = createHourlyRow("Felhő", formatPercent(hour.cloudCover));
+    const cloudRow = createHourlyRow(t.rowCloud, formatPercent(hour.cloudCover));
     const meter = document.createElement("div");
     meter.className = "cloud-meter";
     const meterFill = document.createElement("span");
     meterFill.style.width = `${clamp(hour.cloudCover ?? 0, 0, 100)}%`;
     meter.append(meterFill);
 
-    const windRow = createHourlyRow("Szél", `${formatSpeed(hour.windSpeed)} / ${formatSpeed(hour.windGusts)}`);
-    const precipitationRow = createHourlyRow("Csapadék", `${formatPercent(hour.precipitationProbability)} · ${formatMillimetres(hour.precipitation)}`);
+    const windRow = createHourlyRow(t.rowWind, `${formatSpeed(hour.windSpeed)} / ${formatSpeed(hour.windGusts)}`);
+    const precipitationRow = createHourlyRow(
+      t.rowPrecipitation,
+      `${formatPercent(hour.precipitationProbability)} · ${formatMillimetres(hour.precipitation)}`
+    );
     const dew = getDewRisk(hour.temperature, hour.dewPoint, hour.humidity);
-    const dewRow = createHourlyRow("Harmat", dew.short);
+    const dewRow = createHourlyRow(t.rowDew, dew.short);
     dewRow.dataset.state = dew.state;
 
     article.append(heading, cloudRow, meter, windRow, precipitationRow, dewRow);
@@ -489,9 +466,7 @@ function createHourlyRow(label, value) {
 }
 
 function getWeatherSummary(hours) {
-  if (!hours.length) {
-    return { state: "idle", label: "Nincs adat", text: "Nincs elérhető órás előrejelzés." };
-  }
+  if (!hours.length) return { state: "idle", label: t.noData, text: t.summaryNoData };
 
   const favorable = hours.filter((hour) =>
     (hour.cloudCover ?? 100) <= 30 &&
@@ -499,7 +474,6 @@ function getWeatherSummary(hours) {
     (hour.windSpeed ?? 100) <= 20 &&
     (hour.windGusts ?? 100) <= 35
   );
-
   const usable = hours.filter((hour) =>
     (hour.cloudCover ?? 100) <= 60 &&
     (hour.precipitationProbability ?? 100) <= 35 &&
@@ -508,62 +482,48 @@ function getWeatherSummary(hours) {
   );
 
   if (favorable.length >= 4) {
-    return {
-      state: "good",
-      label: "Ígéretes",
-      text: `A következő 12 órából ${favorable.length} óra kedvezőnek látszik felhőzet, csapadékesély és szél alapján.`
-    };
+    return { state: "good", label: t.summaryGoodLabel, text: t.summaryGood(favorable.length) };
   }
-
   if (usable.length >= 3) {
-    return {
-      state: "mixed",
-      label: "Változó",
-      text: `Lehet használható időablak, de a körülmények ingadoznak. ${usable.length} óra fér bele a lazább határértékekbe.`
-    };
+    return { state: "mixed", label: t.summaryMixedLabel, text: t.summaryMixed(usable.length) };
   }
-
-  return {
-    state: "poor",
-    label: "Kedvezőtlen",
-    text: "A következő 12 órában a felhőzet, a csapadékesély vagy a szél várhatóan akadályozza az észlelést."
-  };
+  return { state: "poor", label: t.summaryPoorLabel, text: t.summaryPoor };
 }
 
 function getDewRisk(temperature, dewPoint, humidity) {
   if (!Number.isFinite(temperature) || !Number.isFinite(dewPoint)) {
-    return { state: "unknown", text: "Nincs adat", short: "—" };
+    return { state: "unknown", text: t.dewUnknown, short: "—" };
   }
 
   const gap = Math.max(0, temperature - dewPoint);
+  const gapText = gap.toFixed(1);
   const humid = Number.isFinite(humidity) ? humidity : 0;
 
   if (gap <= 1.5 || humid >= 92) {
-    return { state: "high", text: `Magas · ${gap.toFixed(1)} °C különbség`, short: "magas" };
+    return { state: "high", text: t.dewHigh(gapText), short: t.dewShortHigh };
   }
   if (gap <= 3.5 || humid >= 82) {
-    return { state: "medium", text: `Közepes · ${gap.toFixed(1)} °C különbség`, short: "közepes" };
+    return { state: "medium", text: t.dewMedium(gapText), short: t.dewShortMedium };
   }
-  return { state: "low", text: `Alacsony · ${gap.toFixed(1)} °C különbség`, short: "alacsony" };
+  return { state: "low", text: t.dewLow(gapText), short: t.dewShortLow };
 }
 
 function weatherCodeText(code) {
-  if (!Number.isFinite(code)) return "Nincs adat";
-  if (code === 0) return "Derült";
-  if ([1, 2].includes(code)) return "Gyengén felhős";
-  if (code === 3) return "Borult";
-  if ([45, 48].includes(code)) return "Köd";
-  if ([51, 53, 55, 56, 57].includes(code)) return "Szitálás";
-  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return "Eső";
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return "Havazás";
-  if ([95, 96, 99].includes(code)) return "Zivatar";
-  return "Változó";
+  if (!Number.isFinite(code)) return t.noData;
+  if (code === 0) return t.weather.clear;
+  if ([1, 2].includes(code)) return t.weather.partlyCloudy;
+  if (code === 3) return t.weather.overcast;
+  if ([45, 48].includes(code)) return t.weather.fog;
+  if ([51, 53, 55, 56, 57].includes(code)) return t.weather.drizzle;
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return t.weather.rain;
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return t.weather.snow;
+  if ([95, 96, 99].includes(code)) return t.weather.thunderstorm;
+  return t.weather.variable;
 }
 
 function windDirectionText(degrees) {
   if (!Number.isFinite(degrees)) return "";
-  const directions = ["É", "ÉK", "K", "DK", "D", "DNy", "Ny", "ÉNy"];
-  return directions[Math.round(degrees / 45) % 8];
+  return t.directions[Math.round(degrees / 45) % 8];
 }
 
 function formatHourlyLabel(localIso, includeDay) {
@@ -572,15 +532,12 @@ function formatHourlyLabel(localIso, includeDay) {
   if (!includeDay) return time;
   const todayKey = getLocalDateKey(new Date(), state.timezone?.name || "UTC");
   const dayKey = localIso.slice(0, 10);
-  return dayKey === todayKey ? `Most · ${time}` : `Holnap · ${time}`;
+  return dayKey === todayKey ? `${t.now} · ${time}` : `${t.tomorrow} · ${time}`;
 }
 
 function getLocalDateKey(date, timeZone) {
   const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit"
   }).formatToParts(date);
   const values = Object.fromEntries(parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]));
   return `${values.year}-${values.month}-${values.day}`;
@@ -589,19 +546,15 @@ function getLocalDateKey(date, timeZone) {
 function formatTemperature(value) {
   return Number.isFinite(value) ? `${Math.round(value * 10) / 10} °C` : "—";
 }
-
 function formatPercent(value) {
   return Number.isFinite(value) ? `${Math.round(value)}%` : "—";
 }
-
 function formatSpeed(value) {
   return Number.isFinite(value) ? `${Math.round(value)} km/h` : "—";
 }
-
 function formatMillimetres(value) {
   return Number.isFinite(value) ? `${Math.round(value * 10) / 10} mm` : "—";
 }
-
 function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value));
 }
@@ -615,7 +568,7 @@ function renderClocks() {
   const now = new Date();
   ui.headerUtc.textContent = formatTime(now, "UTC");
   ui.utcClock.textContent = formatTime(now, "UTC");
-  ui.utcDate.textContent = formatDate(now, "UTC") + " · UTC";
+  ui.utcDate.textContent = `${formatDate(now, "UTC")} · UTC`;
 
   if (!state.timezone?.name) return;
   ui.localClock.textContent = formatTime(now, state.timezone.name);
@@ -623,34 +576,18 @@ function renderClocks() {
 }
 
 function formatTime(date, timeZone) {
-  return new Intl.DateTimeFormat("hu-HU", {
-    timeZone,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false
+  return new Intl.DateTimeFormat(t.dateLocale, {
+    timeZone, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
   }).format(date);
 }
-
 function formatDate(date, timeZone) {
-  return new Intl.DateTimeFormat("hu-HU", {
-    timeZone,
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "long"
+  return new Intl.DateTimeFormat(t.dateLocale, {
+    timeZone, year: "numeric", month: "long", day: "numeric", weekday: "long"
   }).format(date);
 }
-
 function formatDateTime(date, timeZone) {
-  return new Intl.DateTimeFormat("hu-HU", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false
+  return new Intl.DateTimeFormat(t.dateLocale, {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false
   }).format(date);
 }
 
@@ -660,9 +597,9 @@ function getShortLocationText(location) {
 
   const lat = location?.latitude;
   const lon = location?.longitude;
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return "Nincs kiválasztott helyszín";
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return t.noLocation;
 
-  const source = location.source === "GPS" ? "GPS" : "Kézi";
+  const source = location.source === "GPS" ? "GPS" : t.manualShort;
   const latitude = `${Math.abs(lat).toFixed(4)}° ${lat >= 0 ? "N" : "S"}`;
   const longitude = `${Math.abs(lon).toFixed(4)}° ${lon >= 0 ? "E" : "W"}`;
   return `${source} · ${latitude}, ${longitude}`;
@@ -670,8 +607,7 @@ function getShortLocationText(location) {
 
 function getDecimalText() {
   if (!state.location) return "";
-  const lat = state.location.latitude;
-  const lon = state.location.longitude;
+  const { latitude: lat, longitude: lon } = state.location;
   return `${Math.abs(lat).toFixed(6)}° ${lat >= 0 ? "N" : "S"}, ${Math.abs(lon).toFixed(6)}° ${lon >= 0 ? "E" : "W"}`;
 }
 
@@ -697,19 +633,20 @@ function getSetupText() {
   const dst = getDstInfo(now, state.timezone.name);
   const elevation = Number.isFinite(state.location.elevation)
     ? `${Math.round(state.location.elevation)} m`
-    : "nincs adat";
+    : t.noValue;
+  const dstText = dst.observes ? (dst.active ? t.dstActiveLower : t.dstInactiveLower) : t.dstNoneLower;
 
   return [
-    "ANTEASTRA – ÉSZLELÉSI BEÁLLÍTÁS",
-    `Koordináták: ${getDecimalText()}`,
+    t.setupHeader,
+    `${t.setupCoordinates}: ${getDecimalText()}`,
     `DMS: ${getDmsText()}`,
-    `Magasság: ${elevation}`,
-    `Helyi dátum: ${formatDate(now, state.timezone.name)}`,
-    `Helyi idő: ${formatTime(now, state.timezone.name)}`,
+    `${t.setupElevation}: ${elevation}`,
+    `${t.setupLocalDate}: ${formatDate(now, state.timezone.name)}`,
+    `${t.setupLocalTime}: ${formatTime(now, state.timezone.name)}`,
     `UTC: ${formatDate(now, "UTC")} ${formatTime(now, "UTC")}`,
-    `Időzóna: ${state.timezone.name}`,
-    `UTC-eltérés: ${formatOffset(offsetSeconds)}`,
-    `Nyári időszámítás: ${dst.observes ? (dst.active ? "aktív" : "nem aktív") : "nincs óraátállítás"}`
+    `${t.setupTimezone}: ${state.timezone.name}`,
+    `${t.setupOffset}: ${formatOffset(offsetSeconds)}`,
+    `${t.setupDst}: ${dstText}`
   ].join("\n");
 }
 
@@ -730,7 +667,7 @@ async function copyValue(text, successMessage) {
     }
     setStatus(successMessage, "success");
   } catch {
-    setStatus("A másolás nem sikerült. Jelöld ki kézzel az adatot.", "error");
+    setStatus(t.copyFailed, "error");
   }
 }
 
@@ -752,8 +689,7 @@ function formatOffset(seconds) {
 
 function getTimezoneAbbreviation(date, timeZone) {
   const part = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    timeZoneName: "short"
+    timeZone, timeZoneName: "short"
   }).formatToParts(date).find((item) => item.type === "timeZoneName");
   return part?.value || "—";
 }
@@ -767,11 +703,7 @@ function getDstInfo(date, timeZone) {
     const min = Math.min(...offsets);
     const max = Math.max(...offsets);
     const current = getOffsetMinutes(date, timeZone);
-    return {
-      observes: min !== max,
-      active: min !== max && current > min,
-      currentMinutes: current
-    };
+    return { observes: min !== max, active: min !== max && current > min, currentMinutes: current };
   } catch {
     return { observes: false, active: false, currentMinutes: 0 };
   }

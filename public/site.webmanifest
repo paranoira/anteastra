@@ -1,7 +1,6 @@
 {
-  "name": "AnteAstra – észlelési segéd",
+  "name": "AnteAstra",
   "short_name": "AnteAstra",
-  "lang": "hu",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#050b14",
