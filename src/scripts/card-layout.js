@@ -1,16 +1,19 @@
+import { getLocale, ui } from "../i18n/translations.js";
+
 const ORDER_KEY = "timee.card-order.v2";
 const COLLAPSED_KEY = "timee.card-collapsed.v2";
 const HIDDEN_KEY = "timee.card-hidden.v1";
 const LEGACY_ORDER_KEY = "timee.card-order.v1";
-
 const DEFAULT_ORDER = ["location", "weather", "coordinates", "time", "timezone"];
 
+const locale = getLocale();
+const text = ui[locale];
 const CARD_LABELS = {
-  location: "Helyszín",
-  weather: "Észlelési időjárás",
-  coordinates: "Koordináták",
-  time: "Idő",
-  timezone: "Időzóna"
+  location: text.location.title,
+  weather: text.weather.title,
+  coordinates: text.coordinates.title,
+  time: text.time.title,
+  timezone: text.timezone.title
 };
 
 function safeRead(key, fallback) {
@@ -27,20 +30,24 @@ function safeWrite(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
-    // A felület működik tovább, csak a beállítás nem marad meg.
+    // The interface keeps working even when browser storage is unavailable.
   }
 }
 
 function normalizeKeys(values) {
   if (!Array.isArray(values)) return [];
   const normalized = [];
-
   for (const value of values) {
     const key = value === "local-time" || value === "utc-time" ? "time" : value;
     if (DEFAULT_ORDER.includes(key) && !normalized.includes(key)) normalized.push(key);
   }
-
   return normalized;
+}
+
+function normalizeOrder(values) {
+  const valid = normalizeKeys(values);
+  const missing = DEFAULT_ORDER.filter((key) => !valid.includes(key));
+  return [...valid, ...missing];
 }
 
 function getSavedOrder() {
@@ -51,12 +58,6 @@ function getSavedOrder() {
   const migrated = normalizeOrder(legacy);
   safeWrite(ORDER_KEY, migrated);
   return migrated;
-}
-
-function normalizeOrder(values) {
-  const valid = normalizeKeys(values);
-  const missing = DEFAULT_ORDER.filter((key) => !valid.includes(key));
-  return [...valid, ...missing];
 }
 
 function getCards(layout) {
@@ -90,7 +91,7 @@ function saveHidden(layout) {
 }
 
 function cardLabel(card) {
-  return CARD_LABELS[card.dataset.cardKey] || card.querySelector("h2")?.textContent?.trim() || "Kártya";
+  return CARD_LABELS[card.dataset.cardKey] || card.querySelector("h2")?.textContent?.trim() || "Card";
 }
 
 function setCollapsed(card, collapsed, persist = true) {
@@ -102,8 +103,8 @@ function setCollapsed(card, collapsed, persist = true) {
   card.classList.toggle("is-collapsed", collapsed);
   body.hidden = collapsed;
   button.setAttribute("aria-expanded", String(!collapsed));
-  button.setAttribute("aria-label", `${label} ${collapsed ? "kinyitása" : "összecsukása"}`);
-  button.title = collapsed ? "Kinyitás" : "Összecsukás";
+  button.setAttribute("aria-label", collapsed ? text.common.expandAria(label) : text.common.collapseAria(label));
+  button.title = collapsed ? text.common.expand : text.common.collapse;
 
   if (persist) saveCollapsed(card.parentElement);
 }
@@ -123,8 +124,7 @@ function setCardVisible(layout, key, visible, persist = true) {
 
 function updateEmptyState(layout) {
   const empty = document.getElementById("card-layout-empty");
-  if (!empty) return;
-  empty.hidden = getVisibleCards(layout).length !== 0;
+  if (empty) empty.hidden = getVisibleCards(layout).length !== 0;
 }
 
 function applySavedState(layout) {
@@ -151,15 +151,11 @@ function moveCard(layout, card, direction) {
   const index = cards.indexOf(card);
   if (index < 0) return;
 
-  const targetIndex = direction === "up" ? index - 1 : index + 1;
-  const target = cards[targetIndex];
+  const target = cards[direction === "up" ? index - 1 : index + 1];
   if (!target) return;
 
-  if (direction === "up") {
-    layout.insertBefore(card, target);
-  } else {
-    layout.insertBefore(card, target.nextElementSibling);
-  }
+  if (direction === "up") layout.insertBefore(card, target);
+  else layout.insertBefore(card, target.nextElementSibling);
 
   saveOrder(layout);
   updateMoveButtons(layout);
@@ -167,7 +163,6 @@ function moveCard(layout, card, direction) {
 
 function updateMoveButtons(layout) {
   const cards = getVisibleCards(layout);
-
   cards.forEach((card, index) => {
     const up = card.querySelector('[data-move="up"]');
     const down = card.querySelector('[data-move="down"]');
@@ -189,11 +184,11 @@ function setArrangeMode(layout, enabled) {
 
   if (trigger) {
     trigger.setAttribute("aria-pressed", String(enabled));
-    trigger.setAttribute("aria-label", enabled ? "Rendezés befejezése" : "Kártyák beállításai");
-    trigger.title = enabled ? "Rendezés befejezése" : "Kártyák beállításai";
+    trigger.setAttribute("aria-label", enabled ? text.common.arrangeDone : text.common.settings);
+    trigger.title = enabled ? text.common.arrangeDone : text.common.settings;
   }
+  if (arrangeButton) arrangeButton.textContent = enabled ? text.common.arrangeDone : text.common.arrange;
 
-  if (arrangeButton) arrangeButton.textContent = enabled ? "Rendezés befejezése" : "Rendezés mód";
   updateMoveButtons(layout);
 }
 
@@ -220,7 +215,7 @@ function openSettings(dialog) {
   if (!dialog?.open) dialog?.showModal();
 }
 
-function initCardLayout() {
+export function initCardLayout() {
   const layout = document.getElementById("card-layout");
   const dialog = document.getElementById("layout-settings-dialog");
   const settingsButton = document.getElementById("layout-settings-button");
@@ -260,7 +255,6 @@ function initCardLayout() {
     dialog.close();
     setArrangeMode(layout, true);
   });
-
   resetButton?.addEventListener("click", () => resetLayout(layout));
 
   layout.addEventListener("click", (event) => {
@@ -308,10 +302,4 @@ function initCardLayout() {
     saveOrder(layout);
     updateMoveButtons(layout);
   });
-}
-
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initCardLayout, { once: true });
-} else {
-  initCardLayout();
 }

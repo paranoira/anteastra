@@ -1,5 +1,9 @@
 # Változásnapló
 
+## 0.4.0 – 2026-08-13
+
+- AnteAstra rebrand, HU/EN felület, mobil sticky fejléc, mobil elrendezésgomb, rövidebb főcím, „Miért AnteAstra?” blokk.
+
 ## 0.3.0 – 2026-08-09
 
 - A kártyák fejléc- és tartalomszerkezete közvetlenül a HTML-ben van, nincs futásidejű DOM-átépítés.

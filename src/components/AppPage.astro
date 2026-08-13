@@ -1,0 +1,452 @@
+---
+import "../styles/global.css";
+import { ui } from "../i18n/translations.js";
+
+const { lang = "hu" } = Astro.props;
+const locale = lang === "en" ? "en" : "hu";
+const t = ui[locale];
+const isEnglish = locale === "en";
+const canonicalPath = isEnglish ? "/en" : "/";
+const huUrl = Astro.site ? new URL("/", Astro.site) : null;
+const enUrl = Astro.site ? new URL("/en", Astro.site) : null;
+const canonicalUrl = Astro.site ? new URL(canonicalPath, Astro.site) : null;
+---
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#07111f" />
+    <meta
+      name="description"
+      content={t.metaDescription}
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/site.webmanifest" />
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    {huUrl && <link rel="alternate" hreflang="hu" href={huUrl} />}
+    {enUrl && <link rel="alternate" hreflang="en" href={enUrl} />}
+    {huUrl && <link rel="alternate" hreflang="x-default" href={huUrl} />}
+    <link rel="stylesheet" href="/card-layout.css" />
+    <link rel="stylesheet" href="/anteastra-ui.css" />
+    <title>{t.pageTitle}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{t.skip}</a>
+
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="brand" href={isEnglish ? "/en" : "/"} aria-label={t.homeAria}>
+          <span class="brand-mark" aria-hidden="true">✦</span>
+          <span>
+            <strong>AnteAstra</strong>
+            <small>{t.brandSubtitle}</small>
+          </span>
+        </a>
+
+        <div class="header-tools">
+          <div class="utc-clock" aria-label={t.utcAria}>
+            <span>UTC</span>
+            <strong id="header-utc">--:--:--</strong>
+          </div>
+          <nav class="language-switcher" aria-label={t.languageSwitcher}>
+            <a href="/" lang="hu" hreflang="hu" aria-current={!isEnglish ? "page" : undefined}>HU</a>
+            <a href="/en" lang="en" hreflang="en" aria-current={isEnglish ? "page" : undefined}>EN</a>
+          </nav>
+          <span id="mobile-layout-settings-slot" class="mobile-layout-settings-slot" aria-hidden="true"></span>
+          <button class="icon-button" id="red-mode-button" type="button" aria-pressed="false">
+            <span aria-hidden="true">●</span>
+            <span class="button-label">{t.redMode}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="shell main-content">
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">{t.introEyebrow}</p>
+        <h1 id="page-title">{t.introTitle}</h1>
+        <p>{t.introText}</p>
+      </section>
+
+      <div id="desktop-layout-settings-slot" class="layout-tools">
+        <button
+          id="layout-settings-button"
+          class="layout-settings-trigger"
+          type="button"
+          aria-label={t.common.settings}
+          title={t.common.settings}
+          aria-haspopup="dialog"
+          aria-controls="layout-settings-dialog"
+          aria-pressed="false"
+        >
+          <svg class="layout-icon layout-icon-settings" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M8 14v6" />
+          </svg>
+          <svg class="layout-icon layout-icon-done" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m5 12 4 4L19 6" />
+          </svg>
+        </button>
+      </div>
+
+      <dialog id="layout-settings-dialog" class="layout-settings-dialog" aria-labelledby="layout-settings-title">
+        <div class="layout-settings-panel">
+          <div class="layout-settings-header">
+            <div>
+              <p class="eyebrow">{t.common.interface}</p>
+              <h2 id="layout-settings-title">{t.common.settings}</h2>
+            </div>
+            <button
+              id="layout-settings-close"
+              class="layout-dialog-close"
+              type="button"
+              aria-label={t.common.close}
+              title={t.common.close}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+            </button>
+          </div>
+
+          <p class="layout-settings-help">{t.common.settingsHelp}</p>
+
+          <div class="layout-visibility-list" aria-label={t.common.visibleCards}>
+            <label><input type="checkbox" data-card-visibility="location" checked /> <span>{t.location.title}</span></label>
+            <label><input type="checkbox" data-card-visibility="weather" checked /> <span>{t.weather.title}</span></label>
+            <label><input type="checkbox" data-card-visibility="coordinates" checked /> <span>{t.coordinates.title}</span></label>
+            <label><input type="checkbox" data-card-visibility="time" checked /> <span>{t.time.title}</span></label>
+            <label><input type="checkbox" data-card-visibility="timezone" checked /> <span>{t.timezone.title}</span></label>
+          </div>
+
+          <div class="layout-settings-actions">
+            <button id="layout-arrange-button" class="button button-secondary" type="button">
+              {t.common.arrange}
+            </button>
+            <button id="layout-reset-button" class="button button-quiet" type="button">
+              {t.common.reset}
+            </button>
+          </div>
+        </div>
+      </dialog>
+
+      <div id="card-layout" class="card-layout">
+        <section class="action-card layout-card" data-card-key="location" aria-labelledby="location-title">
+          <header class="layout-card-header">
+            <div class="layout-card-heading">
+              <span class="layout-drag-handle" data-layout-reorder-control title={t.common.drag} aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
+              </span>
+              <div class="layout-card-title-block">
+                <p class="eyebrow">{t.location.eyebrow}</p>
+                <h2 id="location-title">{t.location.title}</h2>
+                <span id="location-card-summary" class="card-collapsed-summary">{t.location.empty}</span>
+              </div>
+            </div>
+            <div class="layout-card-header-actions">
+              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label={t.common.moveUpAria(t.location.title)} title={t.common.moveUp}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label={t.common.moveDownAria(t.location.title)} title={t.common.moveDown}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+              </button>
+              <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-location" aria-label={t.common.collapseAria(t.location.title)} title={t.common.collapse}>
+                <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+            </div>
+          </header>
+
+          <div id="card-body-location" class="layout-card-body location-card-body">
+            <div class="location-card-intro">
+              <p class="muted">{t.location.privacy}</p>
+            </div>
+            <div class="primary-actions">
+              <button class="button button-primary" id="gps-button" type="button">
+                <span aria-hidden="true">⌖</span>
+                {t.location.useGps}
+              </button>
+              <button class="button button-secondary" id="toggle-manual-button" type="button" aria-expanded="false" aria-controls="manual-location">
+                {t.location.manual}
+              </button>
+            </div>
+
+            <form id="manual-location" class="manual-form" hidden>
+              <label>
+                {t.location.latitude}
+                <input id="latitude-input" name="latitude" type="number" min="-90" max="90" step="any" inputmode="decimal" placeholder="47.5480" required />
+              </label>
+              <label>
+                {t.location.longitude}
+                <input id="longitude-input" name="longitude" type="number" min="-180" max="180" step="any" inputmode="decimal" placeholder="18.7200" required />
+              </label>
+              <button class="button button-primary" type="submit">{t.location.apply}</button>
+            </form>
+
+            <p id="status-message" class="status" role="status" aria-live="polite">{t.location.idle}</p>
+          </div>
+        </section>
+
+        <section id="weather-card" class="weather-card layout-card" data-card-key="weather" aria-labelledby="weather-title">
+          <header class="layout-card-header">
+            <div class="layout-card-heading">
+              <span class="layout-drag-handle" data-layout-reorder-control title={t.common.drag} aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
+              </span>
+              <div class="layout-card-title-block">
+                <p class="eyebrow">{t.weather.eyebrow}</p>
+                <h2 id="weather-title">{t.weather.title}</h2>
+              </div>
+            </div>
+            <div class="layout-card-header-actions weather-card-header-actions">
+              <span id="weather-status-badge" class="weather-status" data-state="idle">{t.weather.noData}</span>
+              <button class="card-icon-button" id="refresh-weather-button" type="button" disabled aria-label={t.weather.refreshAria} title={t.common.refresh}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M6.5 9a7 7 0 0 1 11.5-2.5L20 11M4 13l2 4.5A7 7 0 0 0 17.5 15" /></svg>
+              </button>
+              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label={t.common.moveUpAria(t.weather.title)} title={t.common.moveUp}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label={t.common.moveDownAria(t.weather.title)} title={t.common.moveDown}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+              </button>
+              <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-weather" aria-label={t.common.collapseAria(t.weather.title)} title={t.common.collapse}>
+                <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+            </div>
+          </header>
+
+          <div id="card-body-weather" class="layout-card-body">
+            <p id="weather-summary" class="weather-summary">{t.weather.chooseLocation}</p>
+
+            <div class="weather-metrics" aria-label={t.weather.metricsAria}>
+              <article class="weather-metric">
+                <span>{t.weather.condition}</span>
+                <strong id="weather-condition">—</strong>
+                <small>{t.weather.currentModel}</small>
+              </article>
+              <article class="weather-metric">
+                <span>{t.weather.cloud}</span>
+                <strong id="weather-cloud">—</strong>
+                <small id="weather-cloud-layers">{t.weather.cloudLayers}</small>
+              </article>
+              <article class="weather-metric">
+                <span>{t.weather.temperature}</span>
+                <strong id="weather-temperature">—</strong>
+                <small>{t.weather.selectedLocation}</small>
+              </article>
+              <article class="weather-metric">
+                <span>{t.weather.wind}</span>
+                <strong id="weather-wind">—</strong>
+                <small id="weather-wind-detail">{t.weather.gust}</small>
+              </article>
+              <article class="weather-metric">
+                <span>{t.weather.humidity}</span>
+                <strong id="weather-humidity">—</strong>
+                <small id="weather-dewpoint">{t.weather.dewPoint}</small>
+              </article>
+              <article class="weather-metric weather-metric-dew">
+                <span>{t.weather.dewRisk}</span>
+                <strong id="weather-dew-risk" data-state="unknown">—</strong>
+                <small>{t.weather.dewRiskHelp}</small>
+              </article>
+            </div>
+
+            <div id="weather-hourly" class="weather-hourly" role="list" aria-label={t.weather.hourlyAria}>
+              <p class="weather-empty">{t.weather.chooseLocation}</p>
+            </div>
+
+            <div class="weather-footer">
+              <p id="weather-updated">—</p>
+              <p>{t.weather.footer}</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="data-card layout-card" data-card-key="coordinates" aria-labelledby="coordinates-title">
+          <header class="layout-card-header">
+            <div class="layout-card-heading">
+              <span class="layout-drag-handle" data-layout-reorder-control title={t.common.drag} aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
+              </span>
+              <div class="layout-card-title-block">
+                <p class="eyebrow">{t.coordinates.eyebrow}</p>
+                <h2 id="coordinates-title">{t.coordinates.title}</h2>
+              </div>
+            </div>
+            <div class="layout-card-header-actions">
+              <span id="location-source" class="badge">{t.weather.noData}</span>
+              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label={t.common.moveUpAria(t.coordinates.title)} title={t.common.moveUp}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label={t.common.moveDownAria(t.coordinates.title)} title={t.common.moveDown}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+              </button>
+              <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-coordinates" aria-label={t.common.collapseAria(t.coordinates.title)} title={t.common.collapse}>
+                <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+            </div>
+          </header>
+
+          <div id="card-body-coordinates" class="layout-card-body">
+            <dl class="data-list coordinates-list">
+              <div>
+                <dt>{t.coordinates.decimal}</dt>
+                <dd id="decimal-coordinates">—</dd>
+              </div>
+              <div>
+                <dt>{t.coordinates.dms}</dt>
+                <dd id="dms-coordinates">—</dd>
+              </div>
+              <div>
+                <dt>{t.coordinates.accuracy}</dt>
+                <dd id="accuracy-value">—</dd>
+              </div>
+              <div>
+                <dt>{t.coordinates.elevation}</dt>
+                <dd id="elevation-value">—</dd>
+              </div>
+            </dl>
+
+            <div class="card-actions">
+              <button class="button button-quiet" id="copy-decimal-button" type="button" disabled>
+                {t.coordinates.copyDecimal}
+              </button>
+              <button class="button button-quiet" id="copy-dms-button" type="button" disabled>
+                {t.coordinates.copyDms}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="data-card layout-card" data-card-key="time" aria-labelledby="time-title">
+          <header class="layout-card-header">
+            <div class="layout-card-heading">
+              <span class="layout-drag-handle" data-layout-reorder-control title={t.common.drag} aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
+              </span>
+              <div class="layout-card-title-block">
+                <p class="eyebrow">{t.time.eyebrow}</p>
+                <h2 id="time-title">{t.time.title}</h2>
+              </div>
+            </div>
+            <div class="layout-card-header-actions">
+              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label={t.common.moveUpAria(t.time.title)} title={t.common.moveUp}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label={t.common.moveDownAria(t.time.title)} title={t.common.moveDown}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+              </button>
+              <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-time" aria-label={t.common.collapseAria(t.time.title)} title={t.common.collapse}>
+                <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+            </div>
+          </header>
+
+          <div id="card-body-time" class="layout-card-body">
+            <div class="time-card-grid">
+              <article class="time-panel" aria-labelledby="local-time-title">
+                <p class="eyebrow">{t.time.selectedLocation}</p>
+                <h3 id="local-time-title">{t.time.local}</h3>
+                <time id="local-clock" class="large-clock">--:--:--</time>
+                <p id="local-date" class="date-line">—</p>
+              </article>
+              <article class="time-panel" aria-labelledby="utc-time-title">
+                <p class="eyebrow">{t.time.utcEyebrow}</p>
+                <h3 id="utc-time-title">UTC</h3>
+                <time id="utc-clock" class="large-clock">--:--:--</time>
+                <p id="utc-date" class="date-line">—</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="data-card layout-card" data-card-key="timezone" aria-labelledby="timezone-title">
+          <header class="layout-card-header">
+            <div class="layout-card-heading">
+              <span class="layout-drag-handle" data-layout-reorder-control title={t.common.drag} aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
+              </span>
+              <div class="layout-card-title-block">
+                <p class="eyebrow">{t.timezone.eyebrow}</p>
+                <h2 id="timezone-title">{t.timezone.title}</h2>
+              </div>
+            </div>
+            <div class="layout-card-header-actions">
+              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label={t.common.moveUpAria(t.timezone.title)} title={t.common.moveUp}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label={t.common.moveDownAria(t.timezone.title)} title={t.common.moveDown}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+              </button>
+              <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-timezone" aria-label={t.common.collapseAria(t.timezone.title)} title={t.common.collapse}>
+                <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+            </div>
+          </header>
+
+          <div id="card-body-timezone" class="layout-card-body">
+            <dl class="data-list timezone-list">
+              <div>
+                <dt>{t.timezone.iana}</dt>
+                <dd id="timezone-name">—</dd>
+              </div>
+              <div>
+                <dt>{t.timezone.offset}</dt>
+                <dd id="utc-offset">—</dd>
+              </div>
+              <div>
+                <dt>{t.timezone.abbreviation}</dt>
+                <dd id="timezone-abbreviation">—</dd>
+              </div>
+              <div>
+                <dt>{t.timezone.dst}</dt>
+                <dd id="dst-status">—</dd>
+              </div>
+            </dl>
+            <div class="card-actions">
+              <button class="button button-quiet" id="copy-setup-button" type="button" disabled>
+                {t.timezone.copySetup}
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div id="card-layout-empty" class="card-layout-empty" hidden>
+        <p>{t.empty.text}</p>
+        <button id="card-layout-empty-settings" class="button button-secondary" type="button">{t.empty.button}</button>
+      </div>
+
+      <aside class="privacy-note"><strong>{t.privacy.label}</strong> {t.privacy.text}</aside>
+
+      <section class="about-name" aria-labelledby="about-name-title">
+        <p class="eyebrow">{t.about.eyebrow}</p>
+        <h2 id="about-name-title">{t.about.title}</h2>
+        <p>
+          {t.about.prefix} <strong>AnteAstra</strong> {t.about.nameSuffix} <em>ante</em> ({t.about.anteMeaning}) {t.about.and}
+          <em>astra</em> ({t.about.astraMeaning}) {t.about.origin} <strong>{t.about.freeMeaning}</strong> {t.about.ending}
+        </p>
+      </section>
+
+      <section class="coming-next" aria-labelledby="next-title">
+        <p class="eyebrow">{t.next.eyebrow}</p>
+        <h2 id="next-title">{t.next.title}</h2>
+        <div class="feature-chips" aria-label={t.next.aria}>
+          {t.next.items.map((item) => <span>{item}</span>)}
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell">
+        <span>AnteAstra</span>
+        <span>{t.footer}</span>
+      </div>
+    </footer>
+
+    <script>
+      import { initApp } from "../scripts/app.js";
+      import { initCardLayout } from "../scripts/card-layout.js";
+      initApp();
+      initCardLayout();
+    </script>
+    <script is:inline src="/anteastra-ui.js"></script>
+  </body>
+</html>

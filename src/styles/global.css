@@ -411,7 +411,7 @@ input {
 
 @media (max-width: 760px) {
   .shell { width: min(100% - 1rem, 1120px); }
-  .site-header { position: static; }
+  .site-header {}
   .brand small, .button-label, .utc-clock { display: none; }
   .header-inner { min-height: 64px; }
   .main-content { padding-top: 1.5rem; }

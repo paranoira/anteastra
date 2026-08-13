@@ -1,7 +1,6 @@
 {
-  "name": "Timee – csillagászati gyorssegéd",
-  "short_name": "Timee",
-  "lang": "hu",
+  "name": "AnteAstra",
+  "short_name": "AnteAstra",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#050b14",
