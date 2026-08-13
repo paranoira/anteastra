@@ -1,4 +1,4 @@
-# Timee
+# AnteAstra
 
 Gyors hely-, idő- és időjárási segéd amatőr csillagászoknak.
 
@@ -30,7 +30,7 @@ mert minden kiadáskor újragenerálható.
 ## Telepítés cPanelre
 
 1. Futtasd az `npm run build` parancsot, vagy töltsd le a GitHub Actions
-   által készített `timee-dist` artifactot.
+   által készített `anteastra-dist` artifactot.
 2. A `dist/` tartalmát töltsd fel a `public_html/` gyökerébe.
 3. Az `index.html` közvetlenül a `public_html/` alatt legyen.
 4. Frissítés után ellenőrizd a `https://timee.hu/VERSION.txt` címet.
