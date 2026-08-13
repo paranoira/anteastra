@@ -1,4 +1,4 @@
-name: Build Timee
+name: Build AnteAstra
 
 on:
   push:
@@ -36,7 +36,7 @@ jobs:
       - name: Kész weboldal elmentése
         uses: actions/upload-artifact@v7
         with:
-          name: timee-dist
+          name: anteastra-dist
           path: dist/
           if-no-files-found: error
           retention-days: 14
