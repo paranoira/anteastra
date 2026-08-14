@@ -2,11 +2,9 @@ Options -Indexes
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
-
-  # A korábbi és az alternatív publikus címek mindig az elsődleges AnteAstra domainre kerüljenek.
-  RewriteCond %{HTTP_HOST} ^(?:www\.)?timee\.hu$ [NC,OR]
-  RewriteCond %{HTTP_HOST} ^(?:www\.)?anteastra\.hu$ [NC,OR]
-  RewriteCond %{HTTP_HOST} ^www\.anteastra\.space$ [NC]
+  RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+  RewriteCond %{HTTPS} !=on [OR]
+  RewriteCond %{HTTP_HOST} !^anteastra\.space$ [NC]
   RewriteRule ^ https://anteastra.space%{REQUEST_URI} [R=301,L,NE]
 </IfModule>
 

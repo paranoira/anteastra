@@ -38,8 +38,8 @@ mert minden kiadáskor újragenerálható.
 ## Domain
 
 - Elsődleges domain: `anteastra.space`
-- A korábbi `timee.hu` cím 301-es átirányítással az `anteastra.space` megfelelő útvonalára mutat.
-- Az `anteastra.hu` átirányítása külön lépésben kerül beállításra, amikor a domain regisztrációja befejeződik.
+- A `timee.hu` és az `anteastra.hu` címek 301-es átirányítással az `anteastra.space` megfelelő útvonalára mutatnak.
+- A `www` változatok szintén az elsődleges `https://anteastra.space` címre irányítanak.
 
 ## Munkafolyamat
 
