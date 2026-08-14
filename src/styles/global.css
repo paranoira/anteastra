@@ -408,6 +408,9 @@ input {
 .feature-chips span { padding: 0.55rem 0.8rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); }
 .site-footer { padding-block: 1.5rem 2.5rem; color: var(--muted); font-size: 0.85rem; }
 .site-footer .shell { display: flex; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--border); padding-top: 1.25rem; }
+.footer-contact a { text-underline-offset: 0.2em; }
+.footer-contact a:hover { color: var(--accent-strong); }
+.footer-contact a:focus-visible { outline: none; border-radius: 0.2rem; box-shadow: var(--focus); }
 
 @media (max-width: 760px) {
   .shell { width: min(100% - 1rem, 1120px); }

@@ -10,6 +10,18 @@ const canonicalPath = isEnglish ? "/en" : "/";
 const huUrl = Astro.site ? new URL("/", Astro.site) : null;
 const enUrl = Astro.site ? new URL("/en", Astro.site) : null;
 const canonicalUrl = Astro.site ? new URL(canonicalPath, Astro.site) : null;
+const socialLocale = isEnglish ? "en_US" : "hu_HU";
+const alternateSocialLocale = isEnglish ? "hu_HU" : "en_US";
+const structuredData = canonicalUrl
+  ? {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      name: "AnteAstra",
+      url: canonicalUrl.href,
+      description: t.metaDescription,
+      inLanguage: locale
+    }
+  : null;
 ---
 <!doctype html>
 <html lang={locale}>
@@ -21,6 +33,16 @@ const canonicalUrl = Astro.site ? new URL(canonicalPath, Astro.site) : null;
       name="description"
       content={t.metaDescription}
     />
+    <meta property="og:title" content={t.pageTitle} />
+    <meta property="og:description" content={t.metaDescription} />
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+    <meta property="og:locale" content={socialLocale} />
+    <meta property="og:locale:alternate" content={alternateSocialLocale} />
+    <meta property="og:site_name" content="AnteAstra" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={t.pageTitle} />
+    <meta name="twitter:description" content={t.metaDescription} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/site.webmanifest" />
     {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
@@ -30,6 +52,7 @@ const canonicalUrl = Astro.site ? new URL(canonicalPath, Astro.site) : null;
     <link rel="stylesheet" href="/card-layout.css" />
     <link rel="stylesheet" href="/anteastra-ui.css" />
     <title>{t.pageTitle}</title>
+    {structuredData && <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />}
   </head>
   <body>
     <a class="skip-link" href="#main">{t.skip}</a>
@@ -438,6 +461,9 @@ const canonicalUrl = Astro.site ? new URL(canonicalPath, Astro.site) : null;
       <div class="shell">
         <span>AnteAstra</span>
         <span>{t.footer}</span>
+        <span class="footer-contact">
+          {t.contact.prompt} <a href="mailto:hello@anteastra.space">{t.contact.link}</a>
+        </span>
       </div>
     </footer>
 

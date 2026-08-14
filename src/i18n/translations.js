@@ -7,7 +7,7 @@ export function getLocale() {
 
 export const ui = {
   hu: {
-    metaDescription: "AnteAstra – gyors hely-, idő- és időjárási segéd amatőr csillagászoknak.",
+    metaDescription: "Az AnteAstra hely-, idő- és időjárási adatokkal segíti az amatőr csillagászokat az észlelés előkészítésében.",
     pageTitle: "AnteAstra – észlelési segéd amatőr csillagászoknak",
     skip: "Ugrás a tartalomhoz",
     homeAria: "AnteAstra kezdőlap",
@@ -121,10 +121,14 @@ export const ui = {
       aria: "Tervezett funkciók",
       items: ["Napnyugta és szürkület", "Holdfázis és holdkelte", "Seeing és átlátszóság", "Mentett észlelőhelyek"]
     },
-    footer: "Gyors segéd amatőr csillagászoknak."
+    footer: "Gyors segéd amatőr csillagászoknak.",
+    contact: {
+      prompt: "Kérdés vagy visszajelzés?",
+      link: "Írj nekünk"
+    }
   },
   en: {
-    metaDescription: "AnteAstra – a quick location, time and observing-weather helper for amateur astronomers.",
+    metaDescription: "AnteAstra brings together location, time and weather data to help amateur astronomers prepare for an observing session.",
     pageTitle: "AnteAstra – observing helper for amateur astronomers",
     skip: "Skip to content",
     homeAria: "AnteAstra home",
@@ -238,7 +242,11 @@ export const ui = {
       aria: "Planned features",
       items: ["Sunset and twilight", "Moon phase and moonrise", "Seeing and transparency", "Saved observing sites"]
     },
-    footer: "A quick helper for amateur astronomers."
+    footer: "A quick helper for amateur astronomers.",
+    contact: {
+      prompt: "Questions or feedback?",
+      link: "Email us"
+    }
   }
 };
 
