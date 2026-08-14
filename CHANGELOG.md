@@ -1,5 +1,14 @@
 # Változásnapló
 
+## 0.5.0 – 2026-08-14
+
+- Az AnteAstra hivatalos domainje `anteastra.space` lett.
+- A `timee.hu` és `anteastra.hu` címek az új fő domainre irányítanak.
+- Magyar és angol felület.
+- Időjárásikonok és óránkénti észlelési alkalmasság.
+- Mobilos és fejléc-megjelenítés finomítása.
+- Canonical URL-ek, sitemap és robots.txt frissítése.
+
 ## 0.4.1 – 2026-08-14
 
 - dőjárásikonok
