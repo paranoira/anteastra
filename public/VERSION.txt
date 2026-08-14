@@ -1,2 +1,2 @@
-AnteAstra v0.4.0
-Build for https://timee.hu
+AnteAstra v0.4.1
+Build for https://anteastra.space

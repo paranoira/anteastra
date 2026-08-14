@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://timee.hu/sitemap-index.xml
+Sitemap: https://anteastra.space/sitemap.xml
