@@ -1,5 +1,12 @@
 # Változásnapló
 
+## 0.4.1 – 2026-08-14
+
+- dőjárásikonok
+- óránkénti észlelési alkalmasság
+- normál módban színkódolás
+- vörös módban színsemleges megjelenítés
+
 ## 0.4.0 – 2026-08-13
 
 - AnteAstra rebrand, HU/EN felület, mobil sticky fejléc, mobil elrendezésgomb, rövidebb főcím, „Miért AnteAstra?” blokk.
