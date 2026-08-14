@@ -1,7 +1,7 @@
 import { defineConfig } from "astro/config";
 
 export default defineConfig({
-  site: "https://timee.hu",
+  site: "https://anteastra.space",
   output: "static",
   trailingSlash: "never",
   i18n: {

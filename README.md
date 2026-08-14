@@ -2,7 +2,7 @@
 
 Gyors hely-, idő- és időjárási segéd amatőr csillagászoknak.
 
-Éles oldal: https://timee.hu
+Éles oldal: https://anteastra.space
 
 ## Fejlesztői környezet
 
@@ -33,7 +33,13 @@ mert minden kiadáskor újragenerálható.
    által készített `anteastra-dist` artifactot.
 2. A `dist/` tartalmát töltsd fel a `public_html/` gyökerébe.
 3. Az `index.html` közvetlenül a `public_html/` alatt legyen.
-4. Frissítés után ellenőrizd a `https://timee.hu/VERSION.txt` címet.
+4. Frissítés után ellenőrizd a `https://anteastra.space/VERSION.txt` címet.
+
+## Domain
+
+- Elsődleges domain: `anteastra.space`
+- A `timee.hu` és az `anteastra.hu` címek 301-es átirányítással az `anteastra.space` megfelelő útvonalára mutatnak.
+- A `www` változatok szintén az elsődleges `https://anteastra.space` címre irányítanak.
 
 ## Munkafolyamat
 
