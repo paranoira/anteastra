@@ -1,4 +1,5 @@
 import { getLocale, runtime } from "../i18n/translations.js";
+import { calculateNightSky, createMoonIlluminationPath } from "./astronomy.js";
 
 const STORAGE_KEY = "timee.location.v1";
 const THEME_KEY = "timee.theme.v1";
@@ -9,6 +10,7 @@ const state = {
   location: null,
   timezone: null,
   weather: null,
+  astronomy: null,
   tickId: null,
   locationRequestId: 0,
   locationAbortController: null
@@ -35,7 +37,11 @@ function mapUi() {
     "weather-card", "weather-status-badge", "weather-summary", "weather-condition",
     "weather-cloud", "weather-cloud-layers", "weather-temperature", "weather-wind",
     "weather-wind-detail", "weather-humidity", "weather-dewpoint", "weather-dew-risk",
-    "weather-hourly", "weather-updated", "refresh-weather-button"
+    "weather-hourly", "weather-updated", "refresh-weather-button",
+    "night-sky-status", "night-sky-summary", "darkness-window", "darkness-duration",
+    "sunset-time", "civil-dusk-time", "nautical-dusk-time", "night-start-time",
+    "moon-visual", "moon-lit-path", "moon-phase", "moon-illumination", "moonrise-time",
+    "moonset-time", "moon-altitude", "moon-altitude-context", "moon-visibility"
   ].forEach((id) => {
     ui[toCamel(id)] = document.getElementById(id);
   });
@@ -141,9 +147,11 @@ async function setLocation(location, options = {}) {
   state.location = location;
   state.timezone = null;
   state.weather = null;
+  state.astronomy = null;
   renderLocation();
   resetLocationTimeUi();
   resetWeatherUi(t.forecastLoading, "loading");
+  resetAstronomyUi(t.astronomy.loading, "loading");
   setStatus(options.restored ? t.restoredLoading : t.dataLoading, "loading");
 
   try {
@@ -160,20 +168,37 @@ async function setLocation(location, options = {}) {
       ? location.gpsAltitude
       : locationData.timezone.elevation;
     state.location.elevationSource = Number.isFinite(location.gpsAltitude) ? "GPS" : "Open-Meteo";
+    try {
+      state.astronomy = calculateNightSky({
+        latitude: location.latitude,
+        longitude: location.longitude,
+        elevation: state.location.elevation,
+        timeZone: state.timezone.name
+      });
+    } catch (astronomyError) {
+      state.astronomy = null;
+      console.error(astronomyError);
+    }
 
     persistLocation();
     renderAll();
-    setStatus(t.locationUpdated, "success");
+    if (!state.astronomy) resetAstronomyUi(t.astronomy.unavailable, "error");
+    setStatus(
+      state.astronomy ? t.locationUpdated : t.locationUpdatedWithoutSky,
+      state.astronomy ? "success" : "error"
+    );
   } catch (error) {
     if (error?.name === "AbortError" || requestId !== state.locationRequestId) return;
 
     state.timezone = null;
     state.weather = null;
+    state.astronomy = null;
     state.location.elevation = Number.isFinite(location.gpsAltitude) ? location.gpsAltitude : null;
     state.location.elevationSource = Number.isFinite(location.gpsAltitude) ? "GPS" : null;
     renderLocation();
     resetLocationTimeUi(t.timezoneUnavailable);
     resetWeatherUi(t.forecastUnavailable, "error");
+    resetAstronomyUi(t.astronomy.unavailable, "error");
     setStatus(t.fetchFailed, "error");
     console.error(error);
   }
@@ -306,6 +331,7 @@ function renderAll() {
   renderTimezone();
   renderClocks();
   renderWeather();
+  renderAstronomy();
 }
 
 function resetLocationTimeUi(message = t.timezoneLoading) {
@@ -334,6 +360,24 @@ function resetWeatherUi(message = t.chooseLocation, stateName = "idle") {
   ui.weatherHourly.replaceChildren(createEmptyHourlyMessage(message));
   ui.weatherUpdated.textContent = "—";
   ui.refreshWeatherButton.disabled = !state.location || stateName === "loading";
+}
+
+function resetAstronomyUi(message = t.astronomy.chooseLocation, stateName = "idle") {
+  ui.nightSkyStatus.textContent = stateName === "loading" ? t.loading : stateName === "error" ? t.error : t.noData;
+  ui.nightSkyStatus.dataset.state = stateName;
+  ui.nightSkySummary.textContent = message;
+  ui.darknessWindow.textContent = "—";
+  ui.darknessDuration.textContent = "—";
+  [ui.sunsetTime, ui.civilDuskTime, ui.nauticalDuskTime, ui.nightStartTime, ui.moonriseTime, ui.moonsetTime]
+    .forEach((element) => setEventTime(element, null));
+  ui.moonPhase.textContent = "—";
+  ui.moonIllumination.textContent = "—";
+  ui.moonAltitude.textContent = "—";
+  ui.moonAltitudeContext.textContent = t.astronomy.altitudeContextDarkness;
+  ui.moonVisibility.textContent = "—";
+  ui.moonLitPath.setAttribute("d", "");
+  ui.moonLitPath.removeAttribute("transform");
+  ui.moonVisual.setAttribute("aria-label", t.noData);
 }
 
 function createEmptyHourlyMessage(message) {
@@ -413,6 +457,67 @@ function renderWeather() {
   ui.weatherHourly.replaceChildren(...buildHourlyCards(weather.hours));
   ui.weatherUpdated.textContent = t.updated(formatDateTime(new Date(weather.fetchedAt), state.timezone?.name || "UTC"));
   ui.refreshWeatherButton.disabled = false;
+}
+
+function renderAstronomy() {
+  const astronomy = state.astronomy;
+  if (!astronomy?.moon) {
+    resetAstronomyUi(state.location ? t.astronomy.unavailable : t.astronomy.chooseLocation, state.location ? "error" : "idle");
+    return;
+  }
+
+  const phaseName = t.astronomy.phaseNames[astronomy.moon.phaseIndex] || t.noData;
+  const illumination = Math.round(astronomy.moon.fraction * 100);
+  const duration = formatDuration(astronomy.darkness.durationMinutes);
+  const darknessStart = formatShortTime(astronomy.darkness.start, state.timezone.name);
+  const darknessEnd = formatShortTime(astronomy.darkness.end, state.timezone.name);
+
+  if (astronomy.state === "darkness") {
+    ui.nightSkyStatus.textContent = t.astronomy.darknessBadge(duration);
+    ui.nightSkyStatus.dataset.state = "darkness";
+    ui.nightSkySummary.textContent = t.astronomy.darknessSummary(
+      darknessStart,
+      darknessEnd,
+      duration,
+      phaseName,
+      illumination
+    );
+    ui.darknessWindow.textContent = t.astronomy.darknessWindow(darknessStart, darknessEnd);
+    ui.darknessDuration.textContent = duration;
+  } else {
+    const content = astronomy.state === "polarDay"
+      ? { badge: t.astronomy.polarDayBadge, summary: t.astronomy.polarDaySummary(phaseName, illumination) }
+      : astronomy.state === "sunBelowHorizon"
+        ? { badge: t.astronomy.sunBelowBadge, summary: t.astronomy.sunBelowSummary(phaseName, illumination) }
+        : { badge: t.astronomy.noDarknessBadge, summary: t.astronomy.noDarknessSummary(phaseName, illumination) };
+    ui.nightSkyStatus.textContent = content.badge;
+    ui.nightSkyStatus.dataset.state = "limited";
+    ui.nightSkySummary.textContent = content.summary;
+    ui.darknessWindow.textContent = "—";
+    ui.darknessDuration.textContent = content.badge;
+  }
+
+  setEventTime(ui.sunsetTime, astronomy.timeline.sunset, state.timezone.name);
+  setEventTime(ui.civilDuskTime, astronomy.timeline.civilDusk, state.timezone.name);
+  setEventTime(ui.nauticalDuskTime, astronomy.timeline.nauticalDusk, state.timezone.name);
+  setEventTime(ui.nightStartTime, astronomy.timeline.night, state.timezone.name);
+
+  ui.moonPhase.textContent = phaseName;
+  ui.moonIllumination.textContent = `${illumination}%`;
+  ui.moonAltitude.textContent = formatAngle(astronomy.moon.altitude);
+  ui.moonAltitudeContext.textContent = astronomy.state === "darkness"
+    ? t.astronomy.altitudeContextDarkness
+    : t.astronomy.altitudeContextMidnight;
+  ui.moonVisibility.textContent = t.astronomy.visibility[astronomy.moon.visibility] || "—";
+  setEventTime(ui.moonriseTime, astronomy.moon.rise, state.timezone.name);
+  setEventTime(ui.moonsetTime, astronomy.moon.set, state.timezone.name);
+
+  ui.moonLitPath.setAttribute(
+    "d",
+    createMoonIlluminationPath(astronomy.moon.fraction, astronomy.moon.waxing)
+  );
+  ui.moonLitPath.setAttribute("transform", `rotate(${astronomy.moon.rotation.toFixed(2)} 50 50)`);
+  ui.moonVisual.setAttribute("aria-label", t.astronomy.moonAria(phaseName, illumination));
 }
 
 function buildHourlyCards(hours) {
@@ -541,6 +646,38 @@ function getLocalDateKey(date, timeZone) {
   }).formatToParts(date);
   const values = Object.fromEntries(parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]));
   return `${values.year}-${values.month}-${values.day}`;
+}
+
+function setEventTime(element, date, timeZone = "UTC") {
+  if (!(date instanceof Date) || !Number.isFinite(date.getTime())) {
+    element.textContent = t.astronomy.noEvent;
+    element.removeAttribute("datetime");
+    return;
+  }
+
+  element.textContent = formatShortTime(date, timeZone);
+  element.dateTime = date.toISOString();
+}
+
+function formatShortTime(date, timeZone) {
+  if (!(date instanceof Date) || !Number.isFinite(date.getTime())) return t.astronomy.noEvent;
+  return new Intl.DateTimeFormat(t.dateLocale, {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).format(date);
+}
+
+function formatDuration(totalMinutes) {
+  const minutes = Number.isFinite(totalMinutes) ? Math.max(0, Math.round(totalMinutes)) : 0;
+  return t.astronomy.duration(Math.floor(minutes / 60), minutes % 60);
+}
+
+function formatAngle(value) {
+  if (!Number.isFinite(value)) return "—";
+  const rounded = Math.round(value);
+  return `${rounded < 0 ? "−" : ""}${Math.abs(rounded)}°`;
 }
 
 function formatTemperature(value) {

@@ -4,12 +4,13 @@ const ORDER_KEY = "timee.card-order.v2";
 const COLLAPSED_KEY = "timee.card-collapsed.v2";
 const HIDDEN_KEY = "timee.card-hidden.v1";
 const LEGACY_ORDER_KEY = "timee.card-order.v1";
-const DEFAULT_ORDER = ["location", "weather", "coordinates", "time", "timezone"];
+const DEFAULT_ORDER = ["location", "astronomy", "weather", "coordinates", "time", "timezone"];
 
 const locale = getLocale();
 const text = ui[locale];
 const CARD_LABELS = {
   location: text.location.title,
+  astronomy: text.astronomy.title,
   weather: text.weather.title,
   coordinates: text.coordinates.title,
   time: text.time.title,
@@ -46,6 +47,10 @@ function normalizeKeys(values) {
 
 function normalizeOrder(values) {
   const valid = normalizeKeys(values);
+  if (!valid.includes("astronomy")) {
+    const locationIndex = valid.indexOf("location");
+    valid.splice(locationIndex >= 0 ? locationIndex + 1 : 0, 0, "astronomy");
+  }
   const missing = DEFAULT_ORDER.filter((key) => !valid.includes(key));
   return [...valid, ...missing];
 }

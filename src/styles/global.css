@@ -356,6 +356,138 @@ input {
 .weather-footer p { margin: 0; }
 .weather-footer p:last-child { max-width: 62ch; text-align: right; }
 
+.night-sky-card {
+  --twilight-sunset: #d69270;
+  --twilight-civil: #846c9e;
+  --twilight-nautical: #394e78;
+  --twilight-night: #172944;
+}
+:root[data-theme="red"] .night-sky-card {
+  --twilight-sunset: #a93630;
+  --twilight-civil: #7f2824;
+  --twilight-nautical: #5e1e1b;
+  --twilight-night: #3d1311;
+}
+.astronomy-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0.32rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.astronomy-status[data-state="darkness"] {
+  color: var(--accent-strong);
+  border-color: color-mix(in srgb, var(--accent), var(--border) 58%);
+}
+.astronomy-status[data-state="limited"] {
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning), var(--border) 58%);
+}
+.night-sky-summary {
+  margin: 0 0 1rem;
+  padding: 0.9rem 1rem;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 0.8rem 0.8rem 0;
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+.night-sky-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.85fr);
+  gap: 0.9rem;
+}
+.darkness-panel,
+.moon-panel {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+.darkness-panel { padding: clamp(1rem, 2.5vw, 1.35rem); }
+.darkness-panel h3,
+.moon-panel h3 { margin: 0; font-size: 1rem; color: var(--muted); }
+.darkness-window-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin-top: 0.65rem;
+}
+.darkness-window {
+  font-size: clamp(1.8rem, 5vw, 3.1rem);
+  line-height: 1;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+}
+.darkness-duration { color: var(--accent-strong); font-size: 0.86rem; font-weight: 800; }
+.twilight-strip {
+  height: 9px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 1.2rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.twilight-strip span:nth-child(1) { background: var(--twilight-sunset); }
+.twilight-strip span:nth-child(2) { background: var(--twilight-civil); }
+.twilight-strip span:nth-child(3) { background: var(--twilight-nautical); }
+.twilight-strip span:nth-child(4) { background: var(--twilight-night); }
+.twilight-timeline {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.65rem 0 0;
+  list-style: none;
+}
+.twilight-timeline li { min-width: 0; display: grid; gap: 0.18rem; }
+.twilight-timeline span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.2;
+}
+.twilight-timeline time {
+  font-size: 0.94rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.moon-panel {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.7fr) minmax(0, 1.3fr);
+  gap: 0.8rem;
+  align-items: center;
+  padding: clamp(1rem, 2.5vw, 1.35rem);
+}
+.moon-visual-wrap { display: grid; place-items: center; }
+.moon-visual { width: min(100%, 138px); height: auto; overflow: visible; }
+.moon-disc-shadow { fill: var(--bg); }
+.moon-disc-lit { fill: var(--text); }
+.moon-disc-outline { fill: none; stroke: var(--border); stroke-width: 2; }
+.moon-details { min-width: 0; }
+.moon-details h3 { color: var(--text); font-size: clamp(1.15rem, 2.4vw, 1.45rem); }
+.moon-illumination { margin: 0.25rem 0 0.75rem; color: var(--muted); font-size: 0.8rem; }
+.moon-illumination strong { color: var(--accent-strong); font-size: 1.05rem; }
+.moon-data { display: grid; gap: 0; margin: 0; }
+.moon-data > div {
+  display: grid;
+  grid-template-columns: minmax(80px, 0.8fr) minmax(0, 1.2fr);
+  gap: 0.65rem;
+  padding: 0.38rem 0;
+  border-top: 1px solid var(--border);
+}
+.moon-data dt { color: var(--muted); font-size: 0.76rem; }
+.moon-data dd { margin: 0; text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+.moon-data small { display: block; color: var(--muted); font-size: 0.62rem; font-weight: 500; }
+.moon-visibility { margin: 0.65rem 0 0; color: var(--muted); font-size: 0.76rem; line-height: 1.35; }
+.astronomy-note { margin: 0.8rem 0 0; color: var(--muted); font-size: 0.72rem; }
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -435,6 +567,8 @@ input {
   .weather-hourly { grid-auto-columns: minmax(150px, 78vw); }
   .weather-footer { flex-direction: column; }
   .weather-footer p:last-child { text-align: left; }
+  .night-sky-grid { grid-template-columns: 1fr; }
+  .moon-panel { grid-template-columns: minmax(100px, 0.5fr) minmax(0, 1fr); }
 
 }
 
@@ -444,4 +578,9 @@ input {
 
 @media (max-width: 460px) {
   .weather-metrics { grid-template-columns: 1fr; }
+  .astronomy-card-header-actions .astronomy-status { display: none; }
+  .moon-panel { grid-template-columns: 96px minmax(0, 1fr); }
+  .twilight-timeline { gap: 0.25rem; }
+  .twilight-timeline span { font-size: 0.62rem; }
+  .twilight-timeline time { font-size: 0.84rem; }
 }

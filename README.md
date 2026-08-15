@@ -1,8 +1,17 @@
 # AnteAstra
 
-Gyors hely-, idő- és időjárási segéd amatőr csillagászoknak.
+Gyors hely-, idő-, időjárás- és égállapot-segéd amatőr csillagászoknak.
 
 Éles oldal: https://anteastra.space
+
+## Fő funkciók
+
+- GPS-alapú vagy kézzel megadott észlelőhely.
+- Pontos koordináták, helyi idő, UTC és időzónaadatok.
+- Észlelésközpontú időjárási összefoglaló és 12 órás előrejelzés.
+- Csillagászati sötétség, szürkületi időpontok és Holdállás egy közös kártyán.
+- Átrendezhető, összecsukható és elrejthető kártyák helyi mentéssel.
+- Magyar és angol felület, mobilos használat és vörös észlelési mód.
 
 ## Fejlesztői környezet
 
@@ -29,11 +38,22 @@ mert minden kiadáskor újragenerálható.
 
 ## Telepítés cPanelre
 
+Az ajánlott éles deploy a GitHub Actions `Deploy AnteAstra` workflowja:
+
+1. A GitHubon nyisd meg az **Actions → Deploy AnteAstra** workflowt.
+2. A **Run workflow** menüben válaszd ki a deployolni kívánt branchet vagy taget.
+3. A workflow `npm ci` és `npm run build` után FTPS-en feltölti a `dist/` tartalmát a cPanel tárhelyre.
+4. Sikeres futás után ellenőrizd a `https://anteastra.space` oldalt és a `https://anteastra.space/VERSION.txt` címet.
+
+Normál kiadásnál a `main` branch deployolandó. Feature branch csak tudatos production előnézethez választható, mert ugyanazt az éles tárhelyet frissíti.
+
+Manuális tartalékfolyamat:
+
 1. Futtasd az `npm run build` parancsot, vagy töltsd le a GitHub Actions
    által készített `anteastra-dist` artifactot.
 2. A `dist/` tartalmát töltsd fel a `public_html/` gyökerébe.
 3. Az `index.html` közvetlenül a `public_html/` alatt legyen.
-4. Frissítés után ellenőrizd a `https://anteastra.space/VERSION.txt` címet.
+4. Frissítés után ellenőrizd az éles oldalt és a `VERSION.txt` fájlt.
 
 ## Domain
 

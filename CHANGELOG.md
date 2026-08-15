@@ -1,5 +1,14 @@
 # Változásnapló
 
+## Kiadatlan
+
+- Új, közös „Sötétség és Hold” kártya a csillagászati sötétség gyors áttekintéséhez.
+- Napnyugta, polgári, navigációs és csillagászati szürkületi időpontok a kiválasztott észlelőhelyhez.
+- Holdfázis, megvilágítottság, holdkelte, holdnyugta és az észlelési ablakhoz tartozó magassági információ.
+- A nap- és holdadatok helyi böngészős számítása, külön kezelve a sarkvidéki nappal és éjszaka eseteit.
+- Magyar és angol szövegek, mobilos elrendezés, vörös mód és akadálymentes kártyaszerkezet.
+- Open Graph-, Twitter/X- és JSON-LD-metaadatok, valamint diszkrét kétnyelvű kapcsolat/visszajelzés lehetőség.
+
 ## 0.5.0 – 2026-08-14
 
 - Az AnteAstra hivatalos domainje `anteastra.space` lett.
@@ -11,7 +20,7 @@
 
 ## 0.4.1 – 2026-08-14
 
-- dőjárásikonok
+- Időjárásikonok
 - óránkénti észlelési alkalmasság
 - normál módban színkódolás
 - vörös módban színsemleges megjelenítés
