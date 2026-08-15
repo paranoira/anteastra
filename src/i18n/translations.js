@@ -72,6 +72,26 @@ export const ui = {
       hourlyAria: "Órás előrejelzés",
       footer: "Az összegzés felhőzet, csapadékesély és szél alapján készült; a helyi viszonyok eltérhetnek."
     },
+    astronomy: {
+      eyebrow: "Éjszakai ég",
+      title: "Sötétség és Hold",
+      chooseLocation: "Válassz helyszínt az éjszakai ég adatainak kiszámításához.",
+      darknessEyebrow: "Észlelési ablak",
+      darknessTitle: "Csillagászati sötétség",
+      timelineAria: "Az esti szürkület szakaszai",
+      sunset: "Napnyugta",
+      civilDusk: "Polgári vége",
+      nauticalDusk: "Navigációs vége",
+      night: "Sötétség",
+      moonEyebrow: "Hold",
+      moonTitle: "Holdállás",
+      illumination: "Megvilágítottság",
+      moonrise: "Holdkelte",
+      moonset: "Holdnyugta",
+      altitude: "Magasság",
+      altitudeContext: "A sötétség közepén",
+      localNote: "A nap- és holdadatokat a böngésző helyben számolja. A domborzat és a helyi horizont takarását az időpontok nem veszik figyelembe."
+    },
     coordinates: {
       eyebrow: "Pozíció",
       title: "Koordináták",
@@ -119,7 +139,7 @@ export const ui = {
       eyebrow: "Következő lépések",
       title: "Erre épül majd a teljes észlelési gyorspanel.",
       aria: "Tervezett funkciók",
-      items: ["Napnyugta és szürkület", "Holdfázis és holdkelte", "Seeing és átlátszóság", "Mentett észlelőhelyek"]
+      items: ["Seeing és átlátszóság", "Mentett észlelőhelyek"]
     },
     footer: "Gyors segéd amatőr csillagászoknak.",
     contact: {
@@ -193,6 +213,26 @@ export const ui = {
       hourlyAria: "Hourly forecast",
       footer: "The summary is based on cloud cover, precipitation probability and wind; local conditions may differ."
     },
+    astronomy: {
+      eyebrow: "Night sky",
+      title: "Darkness & Moon",
+      chooseLocation: "Choose a location to calculate night-sky data.",
+      darknessEyebrow: "Observing window",
+      darknessTitle: "Astronomical darkness",
+      timelineAria: "Evening twilight stages",
+      sunset: "Sunset",
+      civilDusk: "Civil ends",
+      nauticalDusk: "Nautical ends",
+      night: "Darkness",
+      moonEyebrow: "Moon",
+      moonTitle: "Moon conditions",
+      illumination: "Illumination",
+      moonrise: "Moonrise",
+      moonset: "Moonset",
+      altitude: "Altitude",
+      altitudeContext: "At mid-darkness",
+      localNote: "Sun and Moon data are calculated locally in your browser. Times do not account for terrain or an obstructed local horizon."
+    },
     coordinates: {
       eyebrow: "Position",
       title: "Coordinates",
@@ -240,7 +280,7 @@ export const ui = {
       eyebrow: "Coming next",
       title: "This will grow into a complete observing quick panel.",
       aria: "Planned features",
-      items: ["Sunset and twilight", "Moon phase and moonrise", "Seeing and transparency", "Saved observing sites"]
+      items: ["Seeing and transparency", "Saved observing sites"]
     },
     footer: "A quick helper for amateur astronomers.",
     contact: {
@@ -268,8 +308,9 @@ export const runtime = {
     longitudeInvalid: "A hosszúságnak −180 és +180 fok közé kell esnie.",
     forecastLoading: "Az előrejelzés betöltése…",
     restoredLoading: "A mentett helyszín adatainak frissítése…",
-    dataLoading: "Időzóna, magasság és időjárás lekérése…",
-    locationUpdated: "A helyszín, a helyi idő és az előrejelzés frissült.",
+    dataLoading: "Időzóna, magasság, időjárás és égadatok lekérése…",
+    locationUpdated: "A helyszín, a helyi idő, az előrejelzés és az éjszakai ég adatai frissültek.",
+    locationUpdatedWithoutSky: "A helyszín, a helyi idő és az előrejelzés frissült, de az éjszakai ég adatai most nem számíthatók ki.",
     timezoneUnavailable: "Az időzóna nem tölthető be",
     forecastUnavailable: "Az előrejelzés most nem érhető el.",
     fetchFailed: "Az adatlekérés nem sikerült. Próbáld újra; nem mutatunk helyette régi vagy téves adatot.",
@@ -317,6 +358,33 @@ export const runtime = {
       clear: "Derült", partlyCloudy: "Gyengén felhős", overcast: "Borult", fog: "Köd",
       drizzle: "Szitálás", rain: "Eső", snow: "Havazás", thunderstorm: "Zivatar", variable: "Változó"
     },
+    astronomy: {
+      chooseLocation: "Válassz helyszínt az éjszakai ég adatainak kiszámításához.",
+      loading: "Az éjszakai ég adatainak kiszámítása…",
+      unavailable: "Az éjszakai ég adatai most nem számíthatók ki.",
+      noEvent: "—",
+      phaseNames: ["Újhold", "Növő holdsarló", "Első negyed", "Növő hold", "Telihold", "Fogyó hold", "Utolsó negyed", "Fogyó holdsarló"],
+      duration: (hours, minutes) => hours > 0 ? `${hours} óra ${minutes} perc` : `${minutes} perc`,
+      darknessBadge: (duration) => `${duration} sötétség`,
+      darknessWindow: (start, end) => `${start}–${end}`,
+      darknessSummary: (start, end, duration, phase, illumination) => `Csillagászati sötétség ${start} és ${end} között (${duration}). A Hold ${phase.toLowerCase()}, ${illumination}%-os megvilágítottsággal.`,
+      noDarknessBadge: "Nincs teljes sötétség",
+      noDarknessSummary: (phase, illumination) => `Ezen az éjszakán nincs csillagászati sötétség. A Hold ${phase.toLowerCase()}, ${illumination}%-os megvilágítottsággal.`,
+      polarDayBadge: "A Nap nem nyugszik le",
+      polarDaySummary: (phase, illumination) => `A Nap ezen a helyen nem nyugszik a horizont alá. A Hold ${phase.toLowerCase()}, ${illumination}%-os megvilágítottsággal.`,
+      sunBelowBadge: "A Nap nem kel fel",
+      sunBelowSummary: (phase, illumination) => `A Nap ezen a napon nem kel fel; a szürkületi határok ettől még változhatnak. A Hold ${phase.toLowerCase()}, ${illumination}%-os megvilágítottsággal.`,
+      moonAria: (phase, illumination) => `${phase}, ${illumination}% megvilágítottság`,
+      altitudeContextDarkness: "A sötétség közepén",
+      altitudeContextMidnight: "Helyi éjfélkor",
+      visibility: {
+        above: "A Hold a teljes észlelési ablakban a horizont felett marad.",
+        below: "A Hold a teljes észlelési ablakban a horizont alatt marad.",
+        rises: "A Hold az észlelési ablak során felkel.",
+        sets: "A Hold az észlelési ablak során lenyugszik.",
+        changes: "A Hold felkel és lenyugszik az észlelési ablakban."
+      }
+    },
     directions: ["É", "ÉK", "K", "DK", "D", "DNy", "Ny", "ÉNy"],
     now: "Most",
     tomorrow: "Holnap",
@@ -353,8 +421,9 @@ export const runtime = {
     longitudeInvalid: "Longitude must be between −180 and +180 degrees.",
     forecastLoading: "Loading forecast…",
     restoredLoading: "Refreshing the saved location…",
-    dataLoading: "Loading time zone, elevation and weather…",
-    locationUpdated: "Location, local time and forecast updated.",
+    dataLoading: "Loading time zone, elevation, weather and sky data…",
+    locationUpdated: "Location, local time, forecast and night-sky data updated.",
+    locationUpdatedWithoutSky: "Location, local time and forecast updated, but night-sky data could not be calculated.",
     timezoneUnavailable: "Time zone could not be loaded",
     forecastUnavailable: "The forecast is currently unavailable.",
     fetchFailed: "Data could not be loaded. Try again; AnteAstra will not show stale or misleading values instead.",
@@ -401,6 +470,33 @@ export const runtime = {
     weather: {
       clear: "Clear", partlyCloudy: "Partly cloudy", overcast: "Overcast", fog: "Fog",
       drizzle: "Drizzle", rain: "Rain", snow: "Snow", thunderstorm: "Thunderstorm", variable: "Variable"
+    },
+    astronomy: {
+      chooseLocation: "Choose a location to calculate night-sky data.",
+      loading: "Calculating night-sky data…",
+      unavailable: "Night-sky data cannot be calculated right now.",
+      noEvent: "—",
+      phaseNames: ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"],
+      duration: (hours, minutes) => hours > 0 ? `${hours} hr ${minutes} min` : `${minutes} min`,
+      darknessBadge: (duration) => `${duration} dark`,
+      darknessWindow: (start, end) => `${start}–${end}`,
+      darknessSummary: (start, end, duration, phase, illumination) => `Astronomical darkness runs from ${start} to ${end} (${duration}). The Moon is ${phase.toLowerCase()} and ${illumination}% illuminated.`,
+      noDarknessBadge: "No full darkness",
+      noDarknessSummary: (phase, illumination) => `There is no astronomical darkness tonight. The Moon is ${phase.toLowerCase()} and ${illumination}% illuminated.`,
+      polarDayBadge: "The Sun does not set",
+      polarDaySummary: (phase, illumination) => `The Sun does not set below the horizon at this location. The Moon is ${phase.toLowerCase()} and ${illumination}% illuminated.`,
+      sunBelowBadge: "The Sun does not rise",
+      sunBelowSummary: (phase, illumination) => `The Sun does not rise on this date, although twilight boundaries may still change. The Moon is ${phase.toLowerCase()} and ${illumination}% illuminated.`,
+      moonAria: (phase, illumination) => `${phase}, ${illumination}% illuminated`,
+      altitudeContextDarkness: "At mid-darkness",
+      altitudeContextMidnight: "At local midnight",
+      visibility: {
+        above: "The Moon remains above the horizon throughout the observing window.",
+        below: "The Moon remains below the horizon throughout the observing window.",
+        rises: "The Moon rises during the observing window.",
+        sets: "The Moon sets during the observing window.",
+        changes: "The Moon rises and sets during the observing window."
+      }
     },
     directions: ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
     now: "Now",

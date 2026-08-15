@@ -134,6 +134,7 @@ const structuredData = canonicalUrl
 
           <div class="layout-visibility-list" aria-label={t.common.visibleCards}>
             <label><input type="checkbox" data-card-visibility="location" checked /> <span>{t.location.title}</span></label>
+            <label><input type="checkbox" data-card-visibility="astronomy" checked /> <span>{t.astronomy.title}</span></label>
             <label><input type="checkbox" data-card-visibility="weather" checked /> <span>{t.weather.title}</span></label>
             <label><input type="checkbox" data-card-visibility="coordinates" checked /> <span>{t.coordinates.title}</span></label>
             <label><input type="checkbox" data-card-visibility="time" checked /> <span>{t.time.title}</span></label>
@@ -204,6 +205,85 @@ const structuredData = canonicalUrl
             </form>
 
             <p id="status-message" class="status" role="status" aria-live="polite">{t.location.idle}</p>
+          </div>
+        </section>
+
+        <section id="night-sky-card" class="data-card night-sky-card layout-card" data-card-key="astronomy" aria-labelledby="night-sky-title">
+          <header class="layout-card-header">
+            <div class="layout-card-heading">
+              <span class="layout-drag-handle" data-layout-reorder-control title={t.common.drag} aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
+              </span>
+              <div class="layout-card-title-block">
+                <p class="eyebrow">{t.astronomy.eyebrow}</p>
+                <h2 id="night-sky-title">{t.astronomy.title}</h2>
+              </div>
+            </div>
+            <div class="layout-card-header-actions astronomy-card-header-actions">
+              <span id="night-sky-status" class="astronomy-status" data-state="idle">{t.weather.noData}</span>
+              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label={t.common.moveUpAria(t.astronomy.title)} title={t.common.moveUp}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label={t.common.moveDownAria(t.astronomy.title)} title={t.common.moveDown}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+              </button>
+              <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-astronomy" aria-label={t.common.collapseAria(t.astronomy.title)} title={t.common.collapse}>
+                <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+              </button>
+            </div>
+          </header>
+
+          <div id="card-body-astronomy" class="layout-card-body astronomy-card-body">
+            <p id="night-sky-summary" class="night-sky-summary" role="status" aria-live="polite">{t.astronomy.chooseLocation}</p>
+
+            <div class="night-sky-grid">
+              <section class="darkness-panel" aria-labelledby="darkness-panel-title">
+                <p class="eyebrow">{t.astronomy.darknessEyebrow}</p>
+                <h3 id="darkness-panel-title">{t.astronomy.darknessTitle}</h3>
+                <div class="darkness-window-row">
+                  <strong id="darkness-window" class="darkness-window">—</strong>
+                  <span id="darkness-duration" class="darkness-duration">—</span>
+                </div>
+
+                <div class="twilight-strip" aria-hidden="true">
+                  <span></span><span></span><span></span><span></span>
+                </div>
+                <ol class="twilight-timeline" aria-label={t.astronomy.timelineAria}>
+                  <li><span>{t.astronomy.sunset}</span><time id="sunset-time">—</time></li>
+                  <li><span>{t.astronomy.civilDusk}</span><time id="civil-dusk-time">—</time></li>
+                  <li><span>{t.astronomy.nauticalDusk}</span><time id="nautical-dusk-time">—</time></li>
+                  <li><span>{t.astronomy.night}</span><time id="night-start-time">—</time></li>
+                </ol>
+              </section>
+
+              <section class="moon-panel" aria-label={t.astronomy.moonTitle}>
+                <div class="moon-visual-wrap">
+                  <svg id="moon-visual" class="moon-visual" viewBox="0 0 100 100" role="img" aria-label={t.astronomy.moonTitle}>
+                    <circle class="moon-disc-shadow" cx="50" cy="50" r="45" />
+                    <path id="moon-lit-path" class="moon-disc-lit" d="" />
+                    <circle class="moon-disc-outline" cx="50" cy="50" r="45" />
+                  </svg>
+                </div>
+
+                <div class="moon-details">
+                  <p class="eyebrow">{t.astronomy.moonEyebrow}</p>
+                  <h3><span id="moon-phase">—</span></h3>
+                  <p class="moon-illumination"><strong id="moon-illumination">—</strong> {t.astronomy.illumination.toLowerCase()}</p>
+
+                  <dl class="moon-data">
+                    <div><dt>{t.astronomy.moonrise}</dt><dd><time id="moonrise-time">—</time></dd></div>
+                    <div><dt>{t.astronomy.moonset}</dt><dd><time id="moonset-time">—</time></dd></div>
+                    <div>
+                      <dt>{t.astronomy.altitude}</dt>
+                      <dd><span id="moon-altitude">—</span><small id="moon-altitude-context">{t.astronomy.altitudeContext}</small></dd>
+                    </div>
+                  </dl>
+                  <p id="moon-visibility" class="moon-visibility">—</p>
+                </div>
+              </section>
+            </div>
+
+            <p class="astronomy-note">{t.astronomy.localNote}</p>
           </div>
         </section>
 

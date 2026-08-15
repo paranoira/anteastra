@@ -404,31 +404,17 @@ This address is operational and forwards to Gmail.
 
 The following ideas have been discussed as natural extensions of the observing-preparation workflow. They are not all committed release scope.
 
-### Sunset and twilight
+### Twilight and Moon
 
-Useful values may include:
+These belong together in one visually scannable observing card. At a glance, it should answer:
 
-- sunset;
-- civil twilight;
-- nautical twilight;
-- astronomical twilight;
-- practical start/end of astronomical darkness.
+- when useful astronomical darkness begins and ends at the selected site;
+- what phase the Moon is in and how much of it is illuminated;
+- whether the Moon is likely to be above the horizon during that observing window.
 
-The key product question is:
+The presentation must remain neutral: a new Moon can favour deep-sky observing, while a bright or full Moon may itself be the intended target. Do not reduce lunar conditions to a universal good/bad score.
 
-> When does useful darkness begin at this observing site?
-
-### Moon
-
-Potential data:
-
-- moon phase;
-- illumination;
-- moonrise;
-- moonset;
-- possibly altitude/context relevant to the observing window.
-
-The useful framing is observing impact, not decorative lunar trivia.
+Useful details include sunset and twilight milestones, astronomical-darkness duration, Moon phase and illumination, Moon rise/set, and altitude context. The value is observing context, not decorative lunar trivia.
 
 ### Seeing and transparency
 
