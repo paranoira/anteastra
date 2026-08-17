@@ -1,3 +1,11 @@
+/*
+ * Unbundled visual-enhancement layer linked after card-layout.css but before the
+ * Astro-injected global bundle. It consumes global tokens and styles classes
+ * created by anteastra-ui.js. Functional edits require a cache-busting query
+ * update in AppPage.astro.
+ */
+
+/* Responsive settings slot, intro refinements and language switcher. */
 .mobile-layout-settings-slot {
   display: none;
 }
@@ -70,7 +78,7 @@
   color: var(--accent-strong);
 }
 
-/* Weather visual layer */
+/* Weather icons and textual observing-rating badges. */
 .weather-icon {
   width: 1.15em;
   height: 1.15em;
@@ -114,6 +122,7 @@
   line-height: 1;
 }
 
+/* Semantic colour accents are intentionally limited to normal mode. */
 :root:not([data-theme="red"]) .weather-card[data-observing-state="good"] {
   border-color: color-mix(in srgb, var(--success) 55%, var(--border));
 }
@@ -189,6 +198,7 @@
   background: var(--surface-soft);
 }
 
+/* Shared breakpoint: JS moves the existing settings button into the visible slot. */
 @media (max-width: 760px) {
   .header-inner {
     min-height: 60px;

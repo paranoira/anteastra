@@ -1,3 +1,13 @@
+/*
+ * Astro-bundled, fingerprinted design foundation.
+ *
+ * Shared tokens and domain components live here. Astro currently injects this
+ * bundle after the two manually linked public stylesheets; CSS variables still
+ * resolve for those earlier rules, while equal-specificity declarations here win.
+ * Repeated plain colour plus color-mix() is a compatibility fallback.
+ */
+
+/* Default dark theme tokens. */
 :root {
   color-scheme: dark;
   --bg: #050b14;
@@ -19,6 +29,7 @@
     "Segoe UI", sans-serif;
 }
 
+/* Night-vision-oriented near-monochrome palette. State must still have text. */
 :root[data-theme="red"] {
   --bg: #080000;
   --surface: #130303;
@@ -36,6 +47,7 @@
   --focus: 0 0 0 3px rgba(255, 83, 70, 0.35);
 }
 
+/* Base, reset and page background. */
 * { box-sizing: border-box; }
 html { background: var(--bg); scroll-behavior: smooth; }
 body {
@@ -54,6 +66,7 @@ button, input { font: inherit; }
 button { color: inherit; }
 a { color: inherit; }
 
+/* Skip link and sticky application header. */
 .skip-link {
   position: fixed;
   z-index: 100;
@@ -134,6 +147,7 @@ h2 { margin-bottom: 0.45rem; font-size: clamp(1.35rem, 2.5vw, 1.85rem); line-hei
 .intro > p:last-child { max-width: 65ch; color: var(--muted); font-size: 1.05rem; }
 .muted { color: var(--muted); }
 
+/* Shared surfaces, controls and location form. */
 .action-card, .data-card, .weather-card, .coming-next {
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -205,6 +219,7 @@ input {
 .status[data-state="loading"] { color: var(--warning); }
 
 
+/* Observing-weather cards and hourly forecast. */
 .weather-card {
   margin-bottom: 1.25rem;
   padding: clamp(1.2rem, 3vw, 2rem);
@@ -356,6 +371,7 @@ input {
 .weather-footer p { margin: 0; }
 .weather-footer p:last-child { max-width: 62ch; text-align: right; }
 
+/* Astronomical-darkness timeline and Moon context. */
 .night-sky-card {
   --twilight-sunset: #d69270;
   --twilight-civil: #846c9e;
@@ -488,6 +504,7 @@ input {
 .moon-visibility { margin: 0.65rem 0 0; color: var(--muted); font-size: 0.76rem; line-height: 1.35; }
 .astronomy-note { margin: 0.8rem 0 0; color: var(--muted); font-size: 0.72rem; }
 
+/* Generic data cards, supporting information and footer. */
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -544,6 +561,7 @@ input {
 .footer-contact a:hover { color: var(--accent-strong); }
 .footer-contact a:focus-visible { outline: none; border-radius: 0.2rem; box-shadow: var(--focus); }
 
+/* Shared mobile breakpoint; keep synchronized with both public CSS files and JS. */
 @media (max-width: 760px) {
   .shell { width: min(100% - 1rem, 1120px); }
   .site-header {}
@@ -572,6 +590,7 @@ input {
 
 }
 
+/* Motion is non-essential; user preference wins over decorative transitions. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
 }

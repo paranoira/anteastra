@@ -2,7 +2,7 @@
 
 > Living project memory for humans and coding agents.
 >
-> Last consolidated: 2026-08-14  
+> Last consolidated: 2026-08-17
 > Current stable baseline at consolidation: **v0.5.0**
 
 ## 1. What AnteAstra is
@@ -46,7 +46,9 @@ Typical user questions AnteAstra should answer quickly:
 - Is daylight saving time active?
 - What weather matters for observing over the next hours?
 - Is the night likely to be usable for observing?
-- Later: when does astronomical darkness begin, what is the Moon doing, and what are the seeing/transparency conditions?
+- When does astronomical darkness begin and end?
+- What is the Moon doing during the observing window?
+- Later: what are the seeing and transparency conditions?
 
 Exact coordinates are important not only for display: they can be useful when configuring or aligning telescope equipment.
 
@@ -115,6 +117,7 @@ At v0.5.0 the application is:
 Current known baseline at consolidation:
 
 - Astro `7.1.4`;
+- SunCalc `2.0.1` for local Sun/Moon calculations;
 - package name `anteastra`;
 - static output;
 - `site: "https://anteastra.space"`;
@@ -122,7 +125,7 @@ Current known baseline at consolidation:
 - English under `/en`;
 - `main` must remain a working/stable branch.
 
-Deployment is currently based on generated static `dist/` content and cPanel hosting. GitHub Actions has been used for build verification/artifacts.
+Deployment is based on generated static `dist/` content and cPanel hosting. GitHub Actions provides build verification/artifacts and a manually dispatched strict-FTPS production deploy.
 
 Do not edit production cPanel files manually except for emergency recovery. Build from source instead.
 
@@ -248,6 +251,22 @@ Public-launch milestone included:
 - sitemap;
 - robots.txt.
 
+### Unreleased after v0.5.0 – observing context and settings clarity
+
+Implemented on `main` after the stable tag:
+
+- Open Graph, Twitter/X and truthful `WebApplication` JSON-LD metadata;
+- bilingual contact/feedback links;
+- a combined astronomical-darkness and Moon card;
+- local Sun/Moon calculations with polar-day/night handling.
+
+The current settings feature adds:
+
+- separate Cards and Order tabs inside the settings dialog;
+- draft editing, committed only with OK;
+- Cancel/X/Escape/backdrop discard behaviour;
+- persistent desktop drag and mobile/keyboard move controls inside the dialog.
+
 ## 6. Current information architecture
 
 The application currently revolves around configurable cards.
@@ -282,6 +301,23 @@ Current dimensions include:
 - dew point / dew risk;
 - hourly outlook;
 - observing suitability.
+
+### Darkness and Moon
+
+Purpose:
+
+- make the useful astronomical-darkness window obvious for the selected site;
+- show the Moon in the context of that observing window rather than as decorative trivia.
+
+Includes:
+
+- sunset and civil/nautical/astronomical twilight milestones;
+- astronomical-darkness start, end and duration;
+- Moon phase and illumination;
+- Moon rise/set and a representative altitude context;
+- explicit polar-day/night and no-darkness states.
+
+Sun and Moon values are calculated locally. They remain estimates and do not account for terrain or an obstructed local horizon.
 
 ### Coordinates
 
@@ -333,9 +369,11 @@ These are intentional decisions, not accidental implementation details.
 - Cards can be collapsed.
 - Cards can be hidden.
 - User layout choices persist locally in the browser.
-- Desktop can use drag-style reordering.
-- Mobile needs explicit accessible move controls.
-- A reset action restores the original arrangement.
+- Visibility and ordering are edited on separate tabs in the settings dialog, not directly on the dashboard.
+- Dialog changes are drafts: only OK applies them; Cancel, X, Escape and backdrop discard them.
+- Desktop can use drag-style reordering inside the dialog.
+- Mobile and keyboard users have explicit move controls inside the dialog.
+- A reset action restores order, visibility and collapsed state after confirmation with OK.
 - A completely hidden-card state must still provide a route back to settings.
 - Card controls should remain compact.
 - Mobile usability has equal importance to desktop.
@@ -371,7 +409,7 @@ Current SEO/i18n infrastructure already includes:
 
 SEO should be useful and technically correct, not keyword-stuffed.
 
-Already present by v0.5.0:
+Already present:
 
 - `<title>`;
 - meta description;
@@ -379,16 +417,14 @@ Already present by v0.5.0:
 - hreflang;
 - `robots.txt`;
 - bilingual `sitemap.xml`.
-
-The next SEO/contact work discussed for `feature/seo-feedback` includes:
-
 - Open Graph metadata;
 - Twitter/X card metadata;
-- appropriate JSON-LD structured data;
+- `WebApplication` JSON-LD structured data;
 - a discreet contact/feedback area;
 - `mailto:hello@anteastra.space`;
-- HU/EN copy;
-- social-preview image support when a proper asset exists.
+- HU/EN copy.
+
+Social-preview image support remains optional when a proper final asset exists.
 
 Do **not** create a backend contact form unless there is a real product need.
 
@@ -403,18 +439,6 @@ This address is operational and forwards to Gmail.
 ## 10. Planned / discussed roadmap
 
 The following ideas have been discussed as natural extensions of the observing-preparation workflow. They are not all committed release scope.
-
-### Twilight and Moon
-
-These belong together in one visually scannable observing card. At a glance, it should answer:
-
-- when useful astronomical darkness begins and ends at the selected site;
-- what phase the Moon is in and how much of it is illuminated;
-- whether the Moon is likely to be above the horizon during that observing window.
-
-The presentation must remain neutral: a new Moon can favour deep-sky observing, while a bright or full Moon may itself be the intended target. Do not reduce lunar conditions to a universal good/bad score.
-
-Useful details include sunset and twilight milestones, astronomical-darkness duration, Moon phase and illumination, Moon rise/set, and altitude context. The value is observing context, not decorative lunar trivia.
 
 ### Seeing and transparency
 
@@ -489,7 +513,8 @@ This applies to:
 - local time;
 - weather;
 - elevation;
-- future twilight/Moon/seeing/transparency data.
+- twilight and Moon data;
+- future seeing/transparency data.
 
 ## 13. Accessibility expectations
 
@@ -565,6 +590,8 @@ Examples:
 
 A branch should contain one coherent scope where practical.
 
+Implementation details, storage contracts, test cases and release/deploy steps live in `DEVELOPMENT.md`.
+
 ## 17. Definition of a good AnteAstra feature
 
 Before adding a feature, ask:
@@ -594,7 +621,7 @@ These express the current product better than a generic “astronomy dashboard�
 
 ## 19. How to maintain this file
 
-Update this document when a decision changes product intent, architecture or UX conventions.
+Update this document when a decision changes product intent, architecture or UX conventions. Update `DEVELOPMENT.md` when implementation contracts, data flows, extension recipes or operational steps change.
 
 Do not turn it into a duplicate CHANGELOG.
 

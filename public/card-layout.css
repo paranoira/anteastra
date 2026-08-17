@@ -1,3 +1,13 @@
+/*
+ * Unbundled configurable-card and settings-dialog layer.
+ *
+ * Linked before the Astro-injected global bundle and built from its design tokens
+ * (CSS variables resolve regardless of declaration order). Equal-specificity
+ * global rules load later and win. Functional edits require a cache-busting
+ * query update in AppPage.astro.
+ */
+
+/* Settings launcher and compact icon controls. */
 .layout-tools {
   display: flex;
   justify-content: flex-end;
@@ -52,6 +62,7 @@
   stroke-linejoin: round;
 }
 
+/* Modal shell and fixed header/help structure. */
 .layout-settings-dialog {
   box-sizing: border-box;
   width: min(500px, calc(100% - 1.5rem));
@@ -102,6 +113,8 @@
   border: 0 !important;
 }
 
+/* ARIA tabs and the only scrollable dialog region. Keeping scrolling here leaves
+ * the heading, tabs and action row reachable on short mobile screens. */
 .layout-settings-tabs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -140,6 +153,7 @@
 
 .layout-settings-tabpanel[hidden] { display: none; }
 
+/* Card visibility checklist. */
 .layout-visibility-list {
   display: grid;
   gap: 0.45rem;
@@ -172,6 +186,7 @@
   accent-color: var(--accent);
 }
 
+/* Order editor: desktop drag enhancement plus persistent move controls. */
 .layout-order-help {
   margin: 0 0 0.75rem;
   color: var(--muted);
@@ -245,6 +260,7 @@
 
 .layout-order-button:disabled { opacity: 0.35; cursor: not-allowed; }
 
+/* Draft actions: Reset, Cancel and explicit OK commit. */
 .layout-settings-actions {
   display: flex;
   flex-wrap: wrap;
@@ -256,6 +272,7 @@
 
 .layout-settings-actions #layout-reset-button { margin-right: auto; }
 
+/* Live configurable cards and collapsed/empty dashboard states. */
 .card-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -378,6 +395,7 @@
 .card-layout-empty[hidden] { display: none; }
 .card-layout-empty p { margin-bottom: 0.75rem; }
 
+/* Mobile bottom sheet. Drag is hidden; 44px move buttons become primary. */
 @media (max-width: 760px) {
   .layout-tools { margin-top: -0.7rem; }
 
@@ -434,16 +452,19 @@
   .time-panel .large-clock { font-size: clamp(2.2rem, 14vw, 3.7rem); }
 }
 
+/* Very narrow dialog: give Reset a full row above the commit actions. */
 @media (max-width: 360px) {
   .layout-settings-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .layout-settings-actions #layout-reset-button { grid-column: 1 / -1; }
 }
 
+/* Protect compact card headers from long dynamic status labels. */
 @media (max-width: 430px) {
   .weather-card-header-actions .weather-status { display: none; }
   .card-collapsed-summary { max-width: 62vw; }
 }
 
+/* Card state remains clear without decorative transitions. */
 @media (prefers-reduced-motion: reduce) {
   .card-collapse-button .collapse-icon { transition: none; }
 }

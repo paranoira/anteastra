@@ -8,6 +8,8 @@
 - A nap- és holdadatok helyi böngészős számítása, külön kezelve a sarkvidéki nappal és éjszaka eseteit.
 - Magyar és angol szövegek, mobilos elrendezés, vörös mód és akadálymentes kártyaszerkezet.
 - Open Graph-, Twitter/X- és JSON-LD-metaadatok, valamint diszkrét kétnyelvű kapcsolat/visszajelzés lehetőség.
+- Kétfüles kártyabeállítás: a láthatóság és a sorrend egy közös dialogban szerkeszthető, a változtatásokat egyértelmű OK/Mégse folyamat kezeli.
+- Átfogó fejlesztői kézikönyv az architektúráról, adatfolyamokról, bővítési szabályokról, ellenőrzésekről és kiadási folyamatról.
 
 ## 0.5.0 – 2026-08-14
 

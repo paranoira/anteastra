@@ -1,4 +1,11 @@
 ---
+/**
+ * Shared static page for both `/` and `/en`.
+ *
+ * The ids, data attributes and ARIA target relationships below are contracts
+ * with app.js, card-layout.js and the public progressive-enhancement layer.
+ * Rename them only together with every consumer.
+ */
 import "../styles/global.css";
 import { ui } from "../i18n/translations.js";
 
@@ -12,6 +19,8 @@ const enUrl = Astro.site ? new URL("/en", Astro.site) : null;
 const canonicalUrl = Astro.site ? new URL(canonicalPath, Astro.site) : null;
 const socialLocale = isEnglish ? "en_US" : "hu_HU";
 const alternateSocialLocale = isEnglish ? "hu_HU" : "en_US";
+// Settings-dialog registry. Keys must match card `data-card-key` values plus
+// DEFAULT_ORDER/CARD_LABELS in card-layout.js; add HU and EN labels together.
 const layoutCards = [
   { key: "location", label: t.location.title },
   { key: "astronomy", label: t.astronomy.title },
@@ -57,6 +66,7 @@ const structuredData = canonicalUrl
     {huUrl && <link rel="alternate" hreflang="hu" href={huUrl} />}
     {enUrl && <link rel="alternate" hreflang="en" href={enUrl} />}
     {huUrl && <link rel="alternate" hreflang="x-default" href={huUrl} />}
+    <!-- Public links precede Astro's injected global bundle; preserve the verified cascade and cache-bust functional changes. -->
     <link rel="stylesheet" href="/card-layout.css?v=3" />
     <link rel="stylesheet" href="/anteastra-ui.css" />
     <title>{t.pageTitle}</title>
@@ -65,6 +75,7 @@ const structuredData = canonicalUrl
   <body>
     <a class="skip-link" href="#main">{t.skip}</a>
 
+    <!-- Shared header utilities; the same settings button is moved between the mobile and desktop slots. -->
     <header class="site-header">
       <div class="shell header-inner">
         <a class="brand" href={isEnglish ? "/en" : "/"} aria-label={t.homeAria}>
@@ -116,6 +127,10 @@ const structuredData = canonicalUrl
         </button>
       </div>
 
+      <!--
+        Native modal with ARIA tabs. card-layout.js owns draft/commit state,
+        keyboard behavior, drag/move controls, dismissal and focus restoration.
+      -->
       <dialog
         id="layout-settings-dialog"
         class="layout-settings-dialog"
@@ -248,6 +263,10 @@ const structuredData = canonicalUrl
         </div>
       </dialog>
 
+      <!--
+        Configurable-card contract: every direct child needs a unique data-card-key,
+        labelled heading, body id and collapse-button aria-controls relationship.
+      -->
       <div id="card-layout" class="card-layout">
         <section class="action-card layout-card" data-card-key="location" aria-labelledby="location-title">
           <header class="layout-card-header">
@@ -554,6 +573,7 @@ const structuredData = canonicalUrl
         </section>
       </div>
 
+      <!-- This escape hatch must remain usable when every configurable card is hidden. -->
       <div id="card-layout-empty" class="card-layout-empty" hidden>
         <p>{t.empty.text}</p>
         <button id="card-layout-empty-settings" class="button button-secondary" type="button">{t.empty.button}</button>
@@ -589,6 +609,7 @@ const structuredData = canonicalUrl
       </div>
     </footer>
 
+    <!-- app.js owns data; card-layout.js owns persisted card UI; the public script only decorates. -->
     <script>
       import { initApp } from "../scripts/app.js";
       import { initCardLayout } from "../scripts/card-layout.js";

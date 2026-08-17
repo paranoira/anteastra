@@ -1,4 +1,14 @@
+/**
+ * Single source of user-facing Hungarian and English copy.
+ *
+ * `ui` serves build-time markup plus card-layout labels. `runtime` serves values
+ * updated by browser data flows. Keep both locale object shapes and formatter
+ * argument order parallel: callers treat those functions as an API.
+ */
+
 export function getLocale() {
+  // The document language is the runtime authority. SSR/build contexts safely
+  // fall back to the default Hungarian locale.
   if (typeof document !== "undefined") {
     return document.documentElement.lang?.toLowerCase().startsWith("en") ? "en" : "hu";
   }
@@ -377,6 +387,7 @@ export const runtime = {
       loading: "Az éjszakai ég adatainak kiszámítása…",
       unavailable: "Az éjszakai ég adatai most nem számíthatók ki.",
       noEvent: "—",
+      // Fixed order: nearest eighth of the lunar phase cycle (0 through 7).
       phaseNames: ["Újhold", "Növő holdsarló", "Első negyed", "Növő hold", "Telihold", "Fogyó hold", "Utolsó negyed", "Fogyó holdsarló"],
       duration: (hours, minutes) => hours > 0 ? `${hours} óra ${minutes} perc` : `${minutes} perc`,
       darknessBadge: (duration) => `${duration} sötétség`,
@@ -399,6 +410,7 @@ export const runtime = {
         changes: "A Hold felkel és lenyugszik az észlelési ablakban."
       }
     },
+    // Fixed order: rounded 45-degree wind-direction buckets starting at north.
     directions: ["É", "ÉK", "K", "DK", "D", "DNy", "Ny", "ÉNy"],
     now: "Most",
     tomorrow: "Holnap",
@@ -490,6 +502,7 @@ export const runtime = {
       loading: "Calculating night-sky data…",
       unavailable: "Night-sky data cannot be calculated right now.",
       noEvent: "—",
+      // Fixed order: nearest eighth of the lunar phase cycle (0 through 7).
       phaseNames: ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"],
       duration: (hours, minutes) => hours > 0 ? `${hours} hr ${minutes} min` : `${minutes} min`,
       darknessBadge: (duration) => `${duration} dark`,
@@ -512,6 +525,7 @@ export const runtime = {
         changes: "The Moon rises and sets during the observing window."
       }
     },
+    // Fixed order: rounded 45-degree wind-direction buckets starting at north.
     directions: ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
     now: "Now",
     tomorrow: "Tomorrow",

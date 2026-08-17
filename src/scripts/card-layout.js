@@ -1,5 +1,14 @@
 import { getLocale, ui } from "../i18n/translations.js";
 
+/**
+ * Configurable-card controller.
+ *
+ * The dashboard DOM is the live source of truth. The settings dialog edits an
+ * isolated draft and changes the dashboard DOM/localStorage only when the user
+ * confirms OK. Closing by any other route must be lossless cancellation.
+ */
+
+// Persisted public schemas. Never repurpose or rename without a migration.
 const ORDER_KEY = "timee.card-order.v2";
 const COLLAPSED_KEY = "timee.card-collapsed.v2";
 const HIDDEN_KEY = "timee.card-hidden.v1";
@@ -17,6 +26,7 @@ const CARD_LABELS = {
   timezone: text.timezone.title
 };
 
+// Storage failures must degrade to a usable, non-persistent dashboard.
 function safeRead(key, fallback) {
   try {
     const raw = localStorage.getItem(key);
@@ -49,6 +59,7 @@ function normalizeKeys(values) {
   if (!Array.isArray(values)) return [];
   const normalized = [];
   for (const value of values) {
+    // v1 stored the two time panels as cards; v2 merged them into one card.
     const key = value === "local-time" || value === "utc-time" ? "time" : value;
     if (DEFAULT_ORDER.includes(key) && !normalized.includes(key)) normalized.push(key);
   }
@@ -57,6 +68,8 @@ function normalizeKeys(values) {
 
 function normalizeOrder(values) {
   const valid = normalizeKeys(values);
+  // The astronomy card was introduced after early saved orders. Insert it after
+  // Location for those users, then append any other newly introduced keys.
   if (!valid.includes("astronomy")) {
     const locationIndex = valid.indexOf("location");
     valid.splice(locationIndex >= 0 ? locationIndex + 1 : 0, 0, "astronomy");
@@ -73,11 +86,13 @@ function getSavedOrder() {
   if (!Array.isArray(legacy)) return [...DEFAULT_ORDER];
 
   const migrated = normalizeOrder(legacy);
+  // Preserve v1 if the v2 write fails (for example because storage is full).
   if (safeWrite(ORDER_KEY, migrated)) safeRemove(LEGACY_ORDER_KEY);
   return migrated;
 }
 
 function getCards(layout) {
+  // Includes hidden cards: their relative positions remain user-configurable.
   return [...layout.querySelectorAll(":scope > .layout-card")];
 }
 
@@ -133,6 +148,8 @@ function updateEmptyState(layout) {
 }
 
 function applySavedState(layout) {
+  // Apply persistence during initialization, before normal user interaction. All
+  // values pass through normalization so stale or corrupt keys are harmless.
   const order = getSavedOrder();
   const collapsed = normalizeKeys(safeRead(COLLAPSED_KEY, []));
   const hidden = normalizeKeys(safeRead(HIDDEN_KEY, []));
@@ -152,6 +169,8 @@ function applySavedState(layout) {
 }
 
 function createDraft(layout) {
+  // Clone mutable settings from live DOM. A Set keeps visibility edits local to
+  // the dialog until applyDraft() commits them.
   return {
     order: getCards(layout).map((card) => card.dataset.cardKey),
     visible: new Set(
@@ -164,6 +183,8 @@ function createDraft(layout) {
 }
 
 function updateOrderList(orderList, draft) {
+  // DOM order mirrors draft order even for hidden cards; the text badge makes
+  // visibility understandable without relying on colour.
   draft.order.forEach((key) => {
     const item = orderList.querySelector(`[data-card-order-key="${key}"]`);
     if (item) orderList.append(item);
@@ -192,6 +213,7 @@ function renderDraft(dialog, draft) {
   const orderList = dialog.querySelector("#layout-order-list");
   if (orderList) updateOrderList(orderList, draft);
 
+  // Never announce a discarded move when a fresh draft is opened or reset.
   const orderStatus = dialog.querySelector("#layout-order-status");
   if (orderStatus) orderStatus.textContent = "";
 }
@@ -211,6 +233,8 @@ function moveDraftCard(orderList, orderStatus, draft, key, direction) {
   updateOrderList(orderList, draft);
   announceOrder(orderStatus, draft, key);
 
+  // Keep keyboard focus on the moved row, falling back when the same-direction
+  // button became disabled at the new boundary.
   const movedItem = orderList.querySelector(`[data-card-order-key="${key}"]`);
   const preferredButton = movedItem?.querySelector(`[data-order-move="${direction}"]`);
   const fallbackDirection = direction === "up" ? "down" : "up";
@@ -219,6 +243,8 @@ function moveDraftCard(orderList, orderStatus, draft, key, direction) {
 }
 
 function applyDraft(layout, draft) {
+  // This is the only visibility/order commit path. Reset also expands cards, but
+  // only after the same explicit confirmation.
   draft.order.forEach((key) => {
     const card = layout.querySelector(`:scope > [data-card-key="${key}"]`);
     if (card) layout.append(card);
@@ -234,6 +260,8 @@ function applyDraft(layout, draft) {
     draft.visible.size === DEFAULT_ORDER.length &&
     DEFAULT_ORDER.every((key) => draft.visible.has(key));
 
+  // Defaults are represented by absent keys, keeping storage clean and allowing
+  // future default-order additions to normalize naturally.
   if (usesDefaults) {
     safeRemove(ORDER_KEY);
     safeRemove(LEGACY_ORDER_KEY);
@@ -255,6 +283,7 @@ function activateTab(dialog, tab, moveFocus = true) {
     const panel = document.getElementById(candidate.getAttribute("aria-controls"));
     if (panel) panel.hidden = !selected;
   });
+  // Panels share one mobile scroll container; each activation starts at its top.
   const content = dialog.querySelector(".layout-settings-content");
   if (content) content.scrollTop = 0;
   if (moveFocus) tab.focus();
@@ -286,6 +315,8 @@ export function initCardLayout() {
     const focusTarget = opener;
     dialog.close(returnValue);
     requestAnimationFrame(() => {
+      // Confirming from the all-hidden empty state can hide the opener. In that
+      // edge case return focus to the permanent header/dashboard settings button.
       const emptyState = focusTarget?.closest("#card-layout-empty");
       const nextFocus = emptyState?.hidden ? settingsButton : focusTarget;
       nextFocus?.focus();
@@ -295,6 +326,7 @@ export function initCardLayout() {
   const openSettings = (source) => {
     if (dialog.open) return;
     opener = source;
+    // Every opening gets a new transaction; no canceled state is reused.
     draft = createDraft(layout);
     renderDraft(dialog, draft);
     activateTab(dialog, cardsTab, false);
@@ -308,6 +340,7 @@ export function initCardLayout() {
   cancelButton?.addEventListener("click", () => closeSettings());
 
   dialog.addEventListener("cancel", (event) => {
+    // Normalize native Escape cancellation through our focus-restoring path.
     event.preventDefault();
     closeSettings();
   });
@@ -326,6 +359,8 @@ export function initCardLayout() {
   });
 
   dialog.addEventListener("click", (event) => {
+    // Only a click on the dialog backdrop cancels; panel clicks must not bubble
+    // into dismissal.
     if (event.target === dialog) closeSettings();
   });
 
@@ -377,6 +412,8 @@ export function initCardLayout() {
 
     draggedItem = item;
     item.classList.add("is-dragging");
+    // Drag is a desktop enhancement. The always-present move buttons remain the
+    // keyboard/touch alternative and the authoritative accessible controls.
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = "move";
       event.dataTransfer.setData("text/plain", item.dataset.cardOrderKey);
@@ -408,6 +445,7 @@ export function initCardLayout() {
     if (!draft) return;
     draft.order = [...DEFAULT_ORDER];
     draft.visible = new Set(DEFAULT_ORDER);
+    // Collapsed state is not changed yet; applyDraft performs it after OK.
     draft.resetCollapsed = true;
     renderDraft(dialog, draft);
   });

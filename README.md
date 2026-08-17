@@ -10,7 +10,7 @@ Gyors hely-, idő-, időjárás- és égállapot-segéd amatőr csillagászoknak
 - Pontos koordináták, helyi idő, UTC és időzónaadatok.
 - Észlelésközpontú időjárási összefoglaló és 12 órás előrejelzés.
 - Csillagászati sötétség, szürkületi időpontok és Holdállás egy közös kártyán.
-- Átrendezhető, összecsukható és elrejthető kártyák helyi mentéssel.
+- Kétfüles beállításdialogban átrendezhető és elrejthető, a főoldalon összecsukható kártyák helyi mentéssel.
 - Magyar és angol felület, mobilos használat és vörös észlelési mód.
 
 ## Fejlesztői környezet
@@ -20,12 +20,16 @@ Szükséges:
 - Node.js 22.12 vagy újabb támogatott páros verzió
 - npm
 
+Friss klónban:
+
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
 Az Astro fejlesztői szervere ezután kiírja a helyi címet.
+
+Az architektúrát, az adatfolyamokat, a bővítési recepteket és a teljes ellenőrzési mátrixot a [fejlesztői kézikönyv](DEVELOPMENT.md) tartalmazza.
 
 ## Éles build
 
@@ -68,3 +72,4 @@ Manuális tartalékfolyamat:
 - Hibajavítás külön ágon készüljön, például `fix/timezone-refresh`.
 - A cPanel fájljait ne szerkeszd kézzel, kivéve sürgős helyreállításkor.
 - Jelszót, API-kulcsot és `.env` fájlt soha ne commitolj.
+- Nem triviális módosítás előtt olvasd el az `AGENTS.md`, `PROJECT_CONTEXT.md`, `DEVELOPMENT.md` és `CHANGELOG.md` releváns részeit.

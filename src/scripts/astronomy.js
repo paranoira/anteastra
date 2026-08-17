@@ -1,6 +1,15 @@
 import * as SunCalc from "suncalc";
 
+/**
+ * Pure Sun/Moon calculation layer: no DOM access and no translated prose.
+ *
+ * The implementation targets the pinned SunCalc 2.0.1 contract. Its emitted
+ * Moon angles are degrees and missing polar events are null plus state flags;
+ * changing that dependency requires focused regression tests.
+ */
+
 const DAY_MS = 24 * 60 * 60 * 1000;
+// 00:00–05:59 belongs to the observing night that began the previous evening.
 const OBSERVING_DAY_CUTOFF_HOUR = 6;
 
 function isValidDate(value) {
@@ -8,6 +17,7 @@ function isValidDate(value) {
 }
 
 function zonedParts(date, timeZone) {
+  // Break an absolute instant into wall-clock parts in the selected IANA zone.
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone,
     year: "numeric",
@@ -34,6 +44,8 @@ function zonedParts(date, timeZone) {
 }
 
 function addCalendarDays(parts, amount) {
+  // UTC is used only for calendar arithmetic here. This is not a fixed 24-hour
+  // shift, so the selected local date remains correct across DST transitions.
   const shifted = new Date(Date.UTC(parts.year, parts.month - 1, parts.day + amount));
   return {
     year: shifted.getUTCFullYear(),
@@ -46,7 +58,9 @@ function zonedDate(parts, hour, minute, timeZone) {
   const targetUtc = Date.UTC(parts.year, parts.month - 1, parts.day, hour, minute, 0);
   let result = new Date(targetUtc);
 
-  // Resolve a local wall-clock time without falling back to the device time zone.
+  // Resolve selected-zone wall-clock time to an absolute Date without ever
+  // falling back to the device zone. Iteration corrects the zone offset; callers
+  // use noon/midnight to minimize ambiguous DST-transition wall times.
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const actual = zonedParts(result, timeZone);
     const actualUtc = Date.UTC(
@@ -77,6 +91,8 @@ function midpoint(start, end) {
 
 function collectMoonEvents(start, end, latitude, longitude) {
   const events = { rises: [], sets: [] };
+  // SunCalc searches a UTC calendar day. Expand by one day on both sides, then
+  // filter absolute instants back to the selected local observing window.
   const firstUtcDay = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()) - DAY_MS;
   const lastUtcDay = Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()) + DAY_MS;
 
@@ -92,17 +108,30 @@ function collectMoonEvents(start, end, latitude, longitude) {
 }
 
 function moonVisibility(events, altitude) {
+  // An event inside the window is authoritative. Without one, representative
+  // sample altitude distinguishes "throughout above" from "throughout below".
   if (events.rise && events.set) return "changes";
   if (events.rise) return "rises";
   if (events.set) return "sets";
   return altitude >= 0 ? "above" : "below";
 }
 
+/**
+ * Calculate the observing night containing `date` in the selected site's zone.
+ *
+ * Evening `night` and following-morning `nightEnd` come from two local calendar
+ * days. Moon data is sampled at mid-darkness, or local midnight when no complete
+ * darkness exists. Rise/set uses sunset-to-sunrise with an 18:00–06:00 fallback.
+ * Returned states explicitly distinguish darkness, polar day, Sun-always-below
+ * and ordinary no-darkness cases. Terrain and local horizon are not modeled.
+ */
 export function calculateNightSky({ date = new Date(), latitude, longitude, elevation = 0, timeZone }) {
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !timeZone) return null;
 
   const observingDate = observingDateParts(date, timeZone);
   const followingDate = addCalendarDays(observingDate, 1);
+  // Local-noon anchors select the intended calendar day without device-zone or
+  // midnight-transition ambiguity.
   const anchor = zonedDate(observingDate, 12, 0, timeZone);
   const followingAnchor = zonedDate(followingDate, 12, 0, timeZone);
   const height = Number.isFinite(elevation) ? Math.max(0, elevation) : 0;
@@ -113,6 +142,8 @@ export function calculateNightSky({ date = new Date(), latitude, longitude, elev
   const darknessEnd = isValidDate(followingSun.nightEnd) ? followingSun.nightEnd : null;
   const hasDarkness = Boolean(darknessStart && darknessEnd && darknessEnd > darknessStart);
 
+  // Moon visibility describes the broad evening observing window, not only the
+  // narrower astronomical-darkness interval.
   const observingWindowStart = isValidDate(sun.sunset)
     ? sun.sunset
     : zonedDate(observingDate, 18, 0, timeZone);
@@ -157,6 +188,7 @@ export function calculateNightSky({ date = new Date(), latitude, longitude, elev
     moon: {
       fraction: Math.min(1, Math.max(0, illumination.fraction)),
       phase: ((illumination.phase % 1) + 1) % 1,
+      // Nearest eighth indexes the eight localized phase-name buckets.
       phaseIndex: Math.round((((illumination.phase % 1) + 1) % 1) * 8) % 8,
       waxing: illumination.waxing,
       altitude: position.altitude,
@@ -169,6 +201,11 @@ export function calculateNightSky({ date = new Date(), latitude, longitude, elev
   };
 }
 
+/**
+ * Build the closed illuminated polygon for a `viewBox="0 0 100 100"` Moon.
+ * `steps` trades path smoothness for size; observer-relative rotation is applied
+ * later by the renderer, not baked into this geometry.
+ */
 export function createMoonIlluminationPath(fraction, waxing, steps = 56) {
   const illuminated = Math.min(1, Math.max(0, Number(fraction) || 0));
   if (illuminated < 0.001) return "";
@@ -178,6 +215,8 @@ export function createMoonIlluminationPath(fraction, waxing, steps = 56) {
   const outer = [];
   const terminator = [];
 
+  // Trace the lit outer limb and return along the terminator. Waxing starts on
+  // the right limb, waning on the left.
   for (let index = 0; index <= steps; index += 1) {
     const y = -radius + (2 * radius * index) / steps;
     const halfWidth = Math.sqrt(Math.max(0, radius * radius - y * y));

@@ -1,11 +1,21 @@
 import { getLocale, runtime } from "../i18n/translations.js";
 import { calculateNightSky, createMoonIlluminationPath } from "./astronomy.js";
 
+/**
+ * Main browser controller for location-dependent application data.
+ *
+ * Astro owns the semantic markup; this singleton module maps that static DOM,
+ * coordinates external/local data, and renders values into it. `initApp()` must
+ * run once per page load: repeated calls would duplicate listeners and clocks.
+ */
+
+// Deployed compatibility keys. Renaming them requires an explicit migration.
 const STORAGE_KEY = "timee.location.v1";
 const THEME_KEY = "timee.theme.v1";
 const locale = getLocale();
 const t = runtime[locale];
 
+// Invariant: timezone, weather and astronomy describe `location`, or are null.
 const state = {
   location: null,
   timezone: null,
@@ -18,6 +28,10 @@ const state = {
 
 const ui = {};
 
+// -----------------------------------------------------------------------------
+// Bootstrap and static DOM contract
+// -----------------------------------------------------------------------------
+
 export function initApp() {
   mapUi();
   bindEvents();
@@ -27,6 +41,8 @@ export function initApp() {
 }
 
 function mapUi() {
+  // Keep this list synchronized with AppPage.astro. Most entries are mandatory;
+  // the collapsed location summary is the only currently optional target.
   [
     "header-utc", "red-mode-button", "gps-button", "toggle-manual-button",
     "manual-location", "latitude-input", "longitude-input", "status-message", "location-card-summary",
@@ -59,8 +75,13 @@ function bindEvents() {
 }
 
 function toCamel(value) {
+  // This helper is intentionally limited to kebab-case HTML ids.
   return value.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
 }
+
+// -----------------------------------------------------------------------------
+// Theme and location input
+// -----------------------------------------------------------------------------
 
 function restoreTheme() {
   const saved = localStorage.getItem(THEME_KEY);
@@ -100,6 +121,8 @@ async function requestGpsLocation() {
   setStatus(t.locating, "loading");
   ui.gpsButton.disabled = true;
 
+  // Permission is requested only from this explicit user action. The options
+  // favour field accuracy while accepting a position cached for up to 5 minutes.
   navigator.geolocation.getCurrentPosition(
     async ({ coords }) => {
       await setLocation({
@@ -121,6 +144,7 @@ async function requestGpsLocation() {
 
 async function applyManualLocation(event) {
   event.preventDefault();
+  // Accept the decimal comma common in Hungarian input as well as a dot.
   const latitude = Number(ui.latitudeInput.value.replace?.(",", ".") ?? ui.latitudeInput.value);
   const longitude = Number(ui.longitudeInput.value.replace?.(",", ".") ?? ui.longitudeInput.value);
 
@@ -139,6 +163,13 @@ async function applyManualLocation(event) {
   ui.toggleManualButton.setAttribute("aria-expanded", "false");
 }
 
+/**
+ * Replace the selected site as one coherent transaction.
+ *
+ * Old dependent values are invalidated before waiting for the network. Abort
+ * saves work; the monotonically increasing id is the correctness guard when an
+ * old response still arrives. Only the current transaction may render or save.
+ */
 async function setLocation(location, options = {}) {
   const requestId = ++state.locationRequestId;
   state.locationAbortController?.abort();
@@ -160,6 +191,7 @@ async function setLocation(location, options = {}) {
       location.longitude,
       state.locationAbortController.signal
     );
+    // Not redundant with abort: transports/intermediaries may still resolve.
     if (requestId !== state.locationRequestId) return;
 
     state.timezone = locationData.timezone;
@@ -168,6 +200,7 @@ async function setLocation(location, options = {}) {
       ? location.gpsAltitude
       : locationData.timezone.elevation;
     state.location.elevationSource = Number.isFinite(location.gpsAltitude) ? "GPS" : "Open-Meteo";
+    // Astronomy failure is isolated so valid time-zone/weather data remain useful.
     try {
       state.astronomy = calculateNightSky({
         latitude: location.latitude,
@@ -206,9 +239,16 @@ async function setLocation(location, options = {}) {
 
 async function refreshWeather() {
   if (!state.location) return;
+  // Refresh the complete snapshot so time zone, elevation, weather and sky data
+  // cannot drift into results from different update generations.
   await setLocation({ ...state.location }, { restored: true });
 }
 
+/**
+ * Fetch time zone, terrain elevation and weather in one keyless Open-Meteo call.
+ * `timezone=auto` makes hourly timestamps selected-site wall-clock strings, and
+ * two forecast days keep a twelve-hour window available around local midnight.
+ */
 async function fetchLocationData(latitude, longitude, signal) {
   const params = new URLSearchParams({
     latitude: latitude.toFixed(6),
@@ -255,6 +295,8 @@ async function fetchLocationData(latitude, longitude, signal) {
 function normalizeWeather(data) {
   const hourly = data.hourly || {};
   const times = Array.isArray(hourly.time) ? hourly.time : [];
+  // Do not parse these zone-less local strings with `new Date()`: that would
+  // silently apply the device time zone. Open-Meteo arrays align by index.
   const currentHour = `${String(data.current?.time || "").slice(0, 13)}:00`;
   let startIndex = times.findIndex((time) => time >= currentHour);
   if (startIndex < 0) startIndex = 0;
@@ -309,6 +351,8 @@ function numberOrNull(value) {
 }
 
 function persistLocation() {
+  // Called only after a successful current-site fetch, so a failed replacement
+  // does not overwrite the last known-good saved location.
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ location: state.location, timezone: state.timezone }));
   } catch (error) {
@@ -320,6 +364,8 @@ function restoreLocation() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!saved?.location) return;
+    // Stored timezone is legacy/compatibility data; always fetch a fresh coherent
+    // snapshot instead of trusting cached dependent values after a reload.
     setLocation(saved.location, { restored: true });
   } catch {
     localStorage.removeItem(STORAGE_KEY);
@@ -327,6 +373,7 @@ function restoreLocation() {
 }
 
 function renderAll() {
+  // This is reached only after the request-generation check in setLocation().
   renderLocation();
   renderTimezone();
   renderClocks();
@@ -504,6 +551,8 @@ function renderAstronomy() {
 
   ui.moonPhase.textContent = phaseName;
   ui.moonIllumination.textContent = `${illumination}%`;
+  // Altitude and disc orientation represent mid-darkness, or local midnight
+  // when that night has no astronomical-darkness window; they are not "now".
   ui.moonAltitude.textContent = formatAngle(astronomy.moon.altitude);
   ui.moonAltitudeContext.textContent = astronomy.state === "darkness"
     ? t.astronomy.altitudeContextDarkness
@@ -521,6 +570,8 @@ function renderAstronomy() {
 }
 
 function buildHourlyCards(hours) {
+  // State retains all 12 hours for the summary; the compact UI samples every
+  // second hour and renders at most six cards.
   const selected = hours.filter((_, index) => index % 2 === 0).slice(0, 6);
   if (!selected.length) return [createEmptyHourlyMessage(t.hourlyEmpty)];
 
@@ -573,6 +624,8 @@ function createHourlyRow(label, value) {
 function getWeatherSummary(hours) {
   if (!hours.length) return { state: "idle", label: t.noData, text: t.summaryNoData };
 
+  // Product heuristic, not a measured guarantee. Missing inputs default to 100
+  // so incomplete forecasts can never be promoted to a favourable result.
   const favorable = hours.filter((hour) =>
     (hour.cloudCover ?? 100) <= 30 &&
     (hour.precipitationProbability ?? 100) <= 20 &&
@@ -596,6 +649,8 @@ function getWeatherSummary(hours) {
 }
 
 function getDewRisk(temperature, dewPoint, humidity) {
+  // Simple field-risk heuristic, not a local dew sensor. Temperature/dew-point
+  // gap remains usable when relative humidity itself is missing.
   if (!Number.isFinite(temperature) || !Number.isFinite(dewPoint)) {
     return { state: "unknown", text: t.dewUnknown, short: "—" };
   }
@@ -633,6 +688,7 @@ function windDirectionText(degrees) {
 
 function formatHourlyLabel(localIso, includeDay) {
   if (!localIso) return "—";
+  // `localIso` is already selected-site wall-clock time from Open-Meteo.
   const time = localIso.slice(11, 16);
   if (!includeDay) return time;
   const todayKey = getLocalDateKey(new Date(), state.timezone?.name || "UTC");
@@ -707,6 +763,7 @@ function renderClocks() {
   ui.utcClock.textContent = formatTime(now, "UTC");
   ui.utcDate.textContent = `${formatDate(now, "UTC")} · UTC`;
 
+  // Never substitute the device zone for the selected observing site's zone.
   if (!state.timezone?.name) return;
   ui.localClock.textContent = formatTime(now, state.timezone.name);
   ui.localDate.textContent = formatDate(now, state.timezone.name);
@@ -793,6 +850,7 @@ async function copyValue(text, successMessage) {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);
     } else {
+      // Compatibility fallback for browsers without the asynchronous Clipboard API.
       const textarea = document.createElement("textarea");
       textarea.value = text;
       textarea.style.position = "fixed";
@@ -833,6 +891,8 @@ function getTimezoneAbbreviation(date, timeZone) {
 
 function getDstInfo(date, timeZone) {
   try {
+    // Monthly sampling treats the year's minimum UTC offset as standard time.
+    // This is display-oriented and may not model extraordinary legal rule changes.
     const year = date.getUTCFullYear();
     const offsets = Array.from({ length: 12 }, (_, month) =>
       getOffsetMinutes(new Date(Date.UTC(year, month, 1, 12, 0, 0)), timeZone)
@@ -847,6 +907,8 @@ function getDstInfo(date, timeZone) {
 }
 
 function getOffsetMinutes(date, timeZone) {
+  // Reinterpret wall-clock parts from the explicit IANA zone as UTC to derive
+  // the offset without consulting the device's local time zone.
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone,
     year: "numeric",
