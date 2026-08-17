@@ -2,7 +2,10 @@
 
 Gyors hely-, idő-, időjárás- és égállapot-segéd amatőr csillagászoknak.
 
-Éles oldal: https://anteastra.space
+Élő alkalmazás:
+
+- Magyar: [anteastra.space](https://anteastra.space/)
+- English: [anteastra.space/en](https://anteastra.space/en)
 
 ## Fő funkciók
 
