@@ -28,6 +28,16 @@ const state = {
 
 const ui = {};
 
+// Map UI is a discardable draft. The controller is loaded only after the user
+// explicitly opens the dialog and never owns selected-location application state.
+let locationMapModulePromise = null;
+let locationMapController = null;
+let mapDialogGeneration = 0;
+let mapDialogOpener = null;
+let mapDraft = null;
+let mapDraftSource = "empty";
+let mapTileFailed = false;
+
 // -----------------------------------------------------------------------------
 // Bootstrap and static DOM contract
 // -----------------------------------------------------------------------------
@@ -44,8 +54,10 @@ function mapUi() {
   // Keep this list synchronized with AppPage.astro. Most entries are mandatory;
   // the collapsed location summary is the only currently optional target.
   [
-    "header-utc", "red-mode-button", "gps-button", "toggle-manual-button",
+    "header-utc", "red-mode-button", "gps-button", "map-location-button", "toggle-manual-button",
     "manual-location", "latitude-input", "longitude-input", "status-message", "location-card-summary",
+    "map-location-dialog", "map-location-close", "map-location-stage", "location-map",
+    "map-location-coordinates", "map-location-status", "map-location-cancel", "map-location-apply",
     "location-source", "decimal-coordinates", "dms-coordinates", "accuracy-value",
     "elevation-value", "copy-decimal-button", "copy-dms-button", "local-clock",
     "local-date", "utc-clock", "utc-date", "timezone-name", "utc-offset",
@@ -66,8 +78,16 @@ function mapUi() {
 function bindEvents() {
   ui.redModeButton.addEventListener("click", toggleTheme);
   ui.gpsButton.addEventListener("click", requestGpsLocation);
+  ui.mapLocationButton.addEventListener("click", openMapLocationDialog);
   ui.toggleManualButton.addEventListener("click", toggleManualForm);
   ui.manualLocation.addEventListener("submit", applyManualLocation);
+  ui.mapLocationClose.addEventListener("click", () => closeMapLocationDialog());
+  ui.mapLocationCancel.addEventListener("click", () => closeMapLocationDialog());
+  ui.mapLocationApply.addEventListener("click", applyMapLocation);
+  ui.mapLocationDialog.addEventListener("cancel", handleMapDialogCancel);
+  ui.mapLocationDialog.addEventListener("keydown", handleMapDialogKeydown);
+  ui.mapLocationDialog.addEventListener("click", handleMapDialogBackdropClick);
+  ui.mapLocationDialog.addEventListener("close", resetMapDialogDraft);
   ui.refreshWeatherButton.addEventListener("click", refreshWeather);
   ui.copyDecimalButton.addEventListener("click", () => copyValue(getDecimalText(), t.copyDecimalSuccess));
   ui.copyDmsButton.addEventListener("click", () => copyValue(getDmsText(), t.copyDmsSuccess));
@@ -110,6 +130,177 @@ function toggleManualForm() {
   ui.manualLocation.hidden = !willOpen;
   ui.toggleManualButton.setAttribute("aria-expanded", String(willOpen));
   if (willOpen) ui.latitudeInput.focus();
+}
+
+function setMapStatus(message, stateName) {
+  // Avoid re-announcing an unchanged status on every keyboard/pointer move;
+  // the coordinate output remains the live, per-movement value.
+  if (ui.mapLocationStatus.textContent !== message) {
+    ui.mapLocationStatus.textContent = message;
+  }
+  if (stateName) ui.mapLocationStatus.dataset.state = stateName;
+  else delete ui.mapLocationStatus.dataset.state;
+}
+
+function renderMapDraftStatus() {
+  if (mapTileFailed) {
+    setMapStatus(t.mapTilesUnavailable, "error");
+    return;
+  }
+  if (mapDraftSource === "outside-range") {
+    setMapStatus(t.mapOutsideRange, "error");
+    return;
+  }
+  if (!mapDraft) {
+    setMapStatus(t.mapChoose);
+    return;
+  }
+  setMapStatus(mapDraftSource === "current" ? t.mapCurrentSelection : t.mapSelectionReady);
+}
+
+function updateMapDraft(coordinate, { source = "user" } = {}) {
+  if (!ui.mapLocationDialog.open) return;
+  mapDraftSource = source;
+
+  if (!coordinate) {
+    mapDraft = null;
+    ui.mapLocationCoordinates.textContent = "—";
+    ui.mapLocationApply.disabled = true;
+    renderMapDraftStatus();
+    return;
+  }
+
+  mapDraft = {
+    latitude: Number(coordinate.latitude),
+    longitude: Number(coordinate.longitude)
+  };
+  ui.mapLocationCoordinates.textContent = formatDecimalCoordinates(mapDraft);
+  // Opening on the current site is a preview, not a reason to discard GPS
+  // accuracy/altitude metadata by saving the same point as a map selection.
+  ui.mapLocationApply.disabled = source === "current";
+  renderMapDraftStatus();
+}
+
+function handleMapTileState(stateName) {
+  if (!ui.mapLocationDialog.open) return;
+  if (stateName === "loading") {
+    if (ui.mapLocationStage.dataset.ready !== "true") setMapStatus(t.mapLoading, "loading");
+    return;
+  }
+  mapTileFailed = stateName === "error";
+  renderMapDraftStatus();
+}
+
+function loadLocationMapModule() {
+  if (!locationMapModulePromise) {
+    locationMapModulePromise = import("./location-map.js").catch((error) => {
+      // A failed chunk request may succeed on a later explicit retry.
+      locationMapModulePromise = null;
+      throw error;
+    });
+  }
+  return locationMapModulePromise;
+}
+
+async function openMapLocationDialog() {
+  if (ui.mapLocationDialog.open) return;
+
+  const generation = ++mapDialogGeneration;
+  mapDialogOpener = ui.mapLocationButton;
+  mapDraft = null;
+  mapDraftSource = "empty";
+  mapTileFailed = false;
+  ui.mapLocationStage.dataset.ready = "false";
+  ui.mapLocationCoordinates.textContent = "—";
+  ui.mapLocationApply.disabled = true;
+  setMapStatus(t.mapLoading, "loading");
+  ui.mapLocationDialog.showModal();
+  requestAnimationFrame(() => ui.mapLocationClose.focus());
+
+  try {
+    const { createLocationMap } = await loadLocationMapModule();
+    if (generation !== mapDialogGeneration || !ui.mapLocationDialog.open) return;
+
+    locationMapController ||= createLocationMap({
+      container: ui.locationMap,
+      zoomLabels: { zoomIn: t.mapZoomIn, zoomOut: t.mapZoomOut },
+      onSelectionChange: updateMapDraft,
+      onTileState: handleMapTileState
+    });
+
+    locationMapController.open({
+      selectedLocation: state.location,
+      defaultCenter: locale === "hu"
+        ? { latitude: 47.1625, longitude: 19.5033 }
+        : { latitude: 20, longitude: 0 },
+      defaultZoom: locale === "hu" ? 6 : 2,
+      onReady: () => {
+        if (generation !== mapDialogGeneration || !ui.mapLocationDialog.open) return;
+        ui.mapLocationStage.dataset.ready = "true";
+        renderMapDraftStatus();
+      }
+    });
+  } catch (error) {
+    if (generation !== mapDialogGeneration || !ui.mapLocationDialog.open) return;
+    ui.mapLocationStage.dataset.ready = "false";
+    ui.mapLocationApply.disabled = true;
+    setMapStatus(t.mapUnavailable, "error");
+    console.error(error);
+  }
+}
+
+function closeMapLocationDialog(returnValue = "cancel") {
+  if (!ui.mapLocationDialog.open) return;
+  const focusTarget = mapDialogOpener;
+  ui.mapLocationDialog.close(returnValue);
+  requestAnimationFrame(() => focusTarget?.focus());
+}
+
+function handleMapDialogCancel(event) {
+  event.preventDefault();
+  closeMapLocationDialog();
+}
+
+function handleMapDialogKeydown(event) {
+  if (event.key !== "Escape") return;
+  event.preventDefault();
+  closeMapLocationDialog();
+}
+
+function handleMapDialogBackdropClick(event) {
+  if (event.target === ui.mapLocationDialog) closeMapLocationDialog();
+}
+
+function resetMapDialogDraft() {
+  ++mapDialogGeneration;
+  mapDialogOpener = null;
+  mapDraft = null;
+  mapDraftSource = "empty";
+  mapTileFailed = false;
+  ui.mapLocationStage.dataset.ready = "false";
+}
+
+async function applyMapLocation() {
+  if (!mapDraft || ui.mapLocationApply.disabled) return;
+  const selected = { ...mapDraft };
+  ui.mapLocationApply.disabled = true;
+
+  if (hasSameCoordinates(selected, state.location)) {
+    closeMapLocationDialog("unchanged");
+    return;
+  }
+
+  closeMapLocationDialog("apply");
+  await applyCoordinateLocation(selected.latitude, selected.longitude, "Map");
+}
+
+function hasSameCoordinates(left, right) {
+  if (!left || !right) return false;
+  const latitudeDifference = Math.abs(Number(left.latitude) - Number(right.latitude));
+  const longitudeDifference = Math.abs(
+    ((Number(left.longitude) - Number(right.longitude) + 180) % 360 + 360) % 360 - 180
+  );
+  return latitudeDifference < 0.000001 && longitudeDifference < 0.000001;
 }
 
 async function requestGpsLocation() {
@@ -158,9 +349,13 @@ async function applyManualLocation(event) {
   }
 
   // Legacy value kept for compatibility with locations already saved in localStorage.
-  await setLocation({ latitude, longitude, accuracy: null, gpsAltitude: null, source: "Kézi" });
+  await applyCoordinateLocation(latitude, longitude, "Kézi");
   ui.manualLocation.hidden = true;
   ui.toggleManualButton.setAttribute("aria-expanded", "false");
+}
+
+function applyCoordinateLocation(latitude, longitude, source) {
+  return setLocation({ latitude, longitude, accuracy: null, gpsAltitude: null, source });
 }
 
 /**
@@ -438,13 +633,19 @@ function renderLocation() {
   const location = state.location;
   if (!location) return;
 
-  ui.locationSource.textContent = location.source === "GPS" ? t.gpsLocation : t.manualLocation;
+  ui.locationSource.textContent = location.source === "GPS"
+    ? t.gpsLocation
+    : location.source === "Map"
+      ? t.mapLocation
+      : t.manualLocation;
   if (ui.locationCardSummary) ui.locationCardSummary.textContent = getShortLocationText(location);
   ui.decimalCoordinates.textContent = getDecimalText();
   ui.dmsCoordinates.textContent = getDmsText();
   ui.accuracyValue.textContent = Number.isFinite(location.accuracy)
     ? `±${Math.round(location.accuracy)} m`
-    : t.manualCoordinate;
+    : location.source === "Map"
+      ? t.mapCoordinate
+      : t.manualCoordinate;
 
   if (Number.isFinite(location.elevation)) {
     ui.elevationValue.textContent = `${Math.round(location.elevation)} m (${location.elevationSource})`;
@@ -793,7 +994,7 @@ function getShortLocationText(location) {
   const lon = location?.longitude;
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return t.noLocation;
 
-  const source = location.source === "GPS" ? "GPS" : t.manualShort;
+  const source = location.source === "GPS" ? "GPS" : location.source === "Map" ? t.mapShort : t.manualShort;
   const latitude = `${Math.abs(lat).toFixed(4)}° ${lat >= 0 ? "N" : "S"}`;
   const longitude = `${Math.abs(lon).toFixed(4)}° ${lon >= 0 ? "E" : "W"}`;
   return `${source} · ${latitude}, ${longitude}`;
@@ -801,7 +1002,11 @@ function getShortLocationText(location) {
 
 function getDecimalText() {
   if (!state.location) return "";
-  const { latitude: lat, longitude: lon } = state.location;
+  return formatDecimalCoordinates(state.location);
+}
+
+function formatDecimalCoordinates(location) {
+  const { latitude: lat, longitude: lon } = location;
   return `${Math.abs(lat).toFixed(6)}° ${lat >= 0 ? "N" : "S"}, ${Math.abs(lon).toFixed(6)}° ${lon >= 0 ? "E" : "W"}`;
 }
 

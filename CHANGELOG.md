@@ -2,6 +2,8 @@
 
 ## Kiadatlan
 
+- Opcionális, mobil- és billentyűzetbarát térképes észlelőhely-választó OpenStreetMap-csempékkel; a kézi koordinátabevitel továbbra is teljes értékű alternatíva.
+
 ## 0.6.0 – 2026-08-17
 
 - Új, közös „Sötétség és Hold” kártya a csillagászati sötétség gyors áttekintéséhez.

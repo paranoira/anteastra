@@ -264,6 +264,73 @@ const structuredData = canonicalUrl
       </dialog>
 
       <!--
+        Optional map picker. The visible map is a draft: app.js applies its
+        coordinates to the selected-location transaction only after confirmation.
+      -->
+      <dialog
+        id="map-location-dialog"
+        class="layout-settings-dialog map-location-dialog"
+        aria-labelledby="map-location-title"
+        aria-describedby="map-location-help map-location-privacy"
+      >
+        <div class="layout-settings-panel map-location-panel">
+          <div class="layout-settings-header">
+            <div>
+              <p class="eyebrow">{t.location.eyebrow}</p>
+              <h2 id="map-location-title">{t.location.mapTitle}</h2>
+            </div>
+            <button
+              id="map-location-close"
+              class="layout-dialog-close"
+              type="button"
+              aria-label={t.common.close}
+              title={t.common.close}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+            </button>
+          </div>
+
+          <p id="map-location-help" class="layout-settings-help">{t.location.mapHelp}</p>
+
+          <div class="map-location-content">
+            <div id="map-location-stage" class="map-location-stage" data-ready="false">
+              <div
+                id="location-map"
+                class="map-location-canvas"
+                role="region"
+                aria-label={t.location.mapAria}
+                aria-describedby="map-location-help map-location-coordinates"
+                tabindex="0"
+              ></div>
+              <span class="map-location-center-marker" aria-hidden="true"></span>
+            </div>
+
+            <div class="map-location-readout">
+              <span id="map-location-coordinates-label">{t.location.mapCoordinates}</span>
+              <output
+                id="map-location-coordinates"
+                aria-labelledby="map-location-coordinates-label"
+                aria-live="polite"
+                aria-atomic="true"
+              >—</output>
+            </div>
+
+            <p id="map-location-status" class="map-location-status" role="status" aria-live="polite" aria-atomic="true"></p>
+            <p id="map-location-privacy" class="map-location-privacy">{t.location.mapPrivacy}</p>
+          </div>
+
+          <div class="layout-settings-actions map-location-actions">
+            <button id="map-location-cancel" class="button button-secondary" type="button">
+              {t.common.cancel}
+            </button>
+            <button id="map-location-apply" class="button button-primary" type="button" disabled>
+              {t.location.mapApply}
+            </button>
+          </div>
+        </div>
+      </dialog>
+
+      <!--
         Configurable-card contract: every direct child needs a unique data-card-key,
         labelled heading, body id and collapse-button aria-controls relationship.
       -->
@@ -292,6 +359,15 @@ const structuredData = canonicalUrl
               <button class="button button-primary" id="gps-button" type="button">
                 <span aria-hidden="true">⌖</span>
                 {t.location.useGps}
+              </button>
+              <button
+                class="button button-secondary"
+                id="map-location-button"
+                type="button"
+                aria-haspopup="dialog"
+                aria-controls="map-location-dialog"
+              >
+                {t.location.chooseOnMap}
               </button>
               <button class="button button-secondary" id="toggle-manual-button" type="button" aria-expanded="false" aria-controls="manual-location">
                 {t.location.manual}

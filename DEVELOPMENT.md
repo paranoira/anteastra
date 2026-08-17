@@ -68,7 +68,9 @@ Ne kezdj feature-munkát közvetlenül a `main` ágon. Ne írj felül ismeretlen
 | `src/scripts/app.js` | Helyszín, Open-Meteo-adatok, alkalmazásállapot és renderelés. |
 | `src/scripts/astronomy.js` | DOM-független nap-/holdszámítás a rögzített SunCalc verzióval. |
 | `src/scripts/card-layout.js` | Kártyasorrend, láthatóság, összecsukás, dialog draft és localStorage. |
+| `src/scripts/location-map.js` | Csak megnyitáskor betöltött Leaflet-adapter, térképdraft és OSM-csempék. |
 | `src/styles/global.css` | Astro által feldolgozott, fingerprintelt alaptéma és domainstílusok. |
+| `src/styles/location-map.css` | A Leaflet-adapterrel együtt, késleltetve injektált térkép- és vörösmód-stílusok. |
 | `public/card-layout.css` | Bundle-olatlan kártya-/dialogstílusok. |
 | `public/anteastra-ui.js` | Progresszív vizuális kiegészítés: mobil settings-gomb és időjárás-dekoráció. |
 | `public/anteastra-ui.css` | A progresszív UI-réteg és a nyelvváltó stílusai. |
@@ -87,6 +89,8 @@ flowchart TD
   Page --> Enhance["anteastra-ui.js vizuális enhancement"]
   App --> Weather["Open-Meteo: időzóna, magasság, időjárás"]
   App --> Astro["astronomy.js + SunCalc: sötétség és Hold"]
+  App -.-> Map["location-map.js + Leaflet (explicit nyitás)"]
+  Map --> Tiles["OpenStreetMap csempék"]
   App --> Storage["localStorage"]
   Layout --> Storage
   Enhance --> Dom["Már renderelt DOM dekorálása"]
@@ -141,6 +145,24 @@ Az `AbortController` erőforrást takarít meg, a kérésazonosító pedig akkor
 
 A „frissítés” gomb a neve ellenére a teljes helyszíntranzakciót újrafuttatja. Ez szándékos: az időzóna, a magasság, az időjárás és a csillagászati snapshot így nem válik szét egymástól.
 
+### Térképes helyszíndraft
+
+A térkép nem önálló alkalmazásállapot és nem ír közvetlenül `localStorage`-ot. A folyamat:
+
+1. a felhasználó explicit megnyitja a map dialogot;
+2. az `app.js` dinamikusan importálja a `location-map.js` modult;
+3. a térkép az aktuális helyre, ennek hiányában lokalizált alapnézetre áll;
+4. kattintás, koppintás, húzás vagy billentyűzetes pásztázás csak a dialog koordinátadraftját módosítja;
+5. a **Kijelölt hely használata** sima `{ latitude, longitude }` értékeket ad az `applyCoordinateLocation()` wrappernek;
+6. a wrapper a közös `setLocation()` tranzakciót hívja `source: "Map"` értékkel;
+7. Mégse, X, Escape és backdrop nem változtatja meg a kiválasztott helyet.
+
+A Leaflet `LatLng` objektuma soha nem kerülhet a központi state-be: mindig friss, sima objektumot kell átadni. A hosszúság `−180…180` közé normalizálódik. A Web Mercator térkép körülbelül ±85,0511° szélességig használható; a kézi mező ezért továbbra is támogatja a teljes ±90° tartományt.
+
+A modul egyetlen Leaflet-példányt használ újra, dialognyitás után `invalidateSize()` hívással. A dinamikus import késői befejezését nyitási generáció védi, sikertelen chunkbetöltés pedig következő explicit nyitáskor újrapróbálható. Csempehiba csak a map dialog saját státuszát módosítja, a kézi helyválasztást nem; újranyitáskor az adapter újraközli az utolsó csempeállapotot, és hibánál egyszer újrarajzolja a réteget.
+
+Az aktuális hely megnyitáskor érvényes preview, de az Apply csak felhasználói térképmozgatás után válik aktívvá. Ha a végső koordináta mégis azonos a kiválasztott hellyel, az alkalmazás no-op: így GPS-helynél nem veszik el a pontosság- és magasságmetaadat.
+
 ### Jelenlegi ismert helyszín-edge case
 
 A `navigator.geolocation.getCurrentPosition()` folyamatban lévő callbackje a böngésző API-jával nem abortálható. A hálózati stale-response védelem ettől különálló: ha egy GPS-kérés után a felhasználó gyorsan kézi helyet választ, a korábban elindított GPS callback később új helyszínváltást indíthat. Ennek javítása külön `fix/` scope legyen, saját kézi race-teszttel; ne próbáld pusztán a meglévő Open-Meteo request ID ellenőrzést áthelyezni.
@@ -166,6 +188,25 @@ Fontos paraméterek:
 - `cache: "no-store"`: a kézi frissítés ténylegesen új választ kér.
 
 Az órás Open-Meteo timestamp-eket a kód szándékosan nem alakítja zóna nélküli `new Date(...)` hívással `Date` objektummá. Ez az eszköz időzónáját csempészné a kiválasztott hely adataiba. Az órás tömbök index szerint igazítottak; új mezőnél a queryt és a `normalizeWeather()` azonos indexű kiolvasását együtt kell módosítani.
+
+### OpenStreetMap és Leaflet
+
+A térkép a pontosan rögzített `leaflet@1.9.4` csomagot használja. A JavaScript, a Leaflet CSS és az AnteAstra térképstílusa egy közös dinamikus importhatár mögött marad; a kezdő HTML nem hivatkozik térképes CSS-re, és megnyitás előtt nem indul OSM-kérés.
+
+A standard csempeszolgáltató szerződése:
+
+- URL: `https://tile.openstreetmap.org/{z}/{x}/{y}.png`;
+- maximum zoom: 19;
+- látható `OpenStreetMap contributors` attribúció;
+- nincs subdomain-szórás, előtöltés, offline letöltés vagy cache-megkerülés;
+- nincs Nominatim/geokódolás ebben a feature-ben;
+- a szolgáltatás best-effort, ezért a kézi koordináta-bevitel mindig megmarad.
+
+A térkép megnyitása az OSM szerverének felfedi a látható területet és a szokásos hálózati metaadatokat, például az IP-címet és a hivatkozó domaint. Ezt a HU és EN dialog-, helyszín- és globális adatkezelési szöveg is jelzi. Az OSM-hez nem külön koordináta-API hívás, hanem a megjelenített csempék területét kódoló kérések mennek; az új koordinátát az Open-Meteo csak jóváhagyás után kapja meg a közös helyszíntranzakcióban.
+
+Szolgáltató- vagy implementációváltás előtt ellenőrizd az OSM Foundation aktuális [Tile Usage Policy](https://operations.osmfoundation.org/policies/tiles/) és [Attribution Guidelines](https://osmfoundation.org/wiki/Licence/Attribution_Guidelines) dokumentumát.
+
+A böngészőbe csomagolt Leaflet és SunCalc BSD-2-Clause licence a `public/THIRD_PARTY_NOTICES.txt` fájlban található, és buildkor a `dist/` gyökerébe másolódik.
 
 ### Geolocation és további platform API-k
 
@@ -282,11 +323,13 @@ Route- vagy SEO-változtatáskor együtt ellenőrizd:
 
 ## 13. CSS, asset pipeline, mobil és vörös mód
 
-Három stílusréteg működik együtt. A jelenlegi generált HTML tényleges kaszkádsorrendje:
+Három induló stílusréteg és egy opcionális, futásidejű térképréteg működik együtt. A jelenlegi generált HTML tényleges induló kaszkádsorrendje:
 
 1. `public/card-layout.css`: nyers dialog-/kártyaréteg;
 2. `public/anteastra-ui.css`: nyers vizuális enhancement és fejléc-finomságok;
 3. `src/styles/global.css`: az Astro által a kézi linkek után injektált, fingerprintelt token- és alapkomponens-bundle.
+
+A `src/styles/location-map.css` nem jelenik meg külön `<link>` elemként a kezdő HTML-ben. A `location-map.js` `?inline` CSS-importként kapja meg a Leaflet- és mapstílusokat, és a dinamikus modul futásakor egy azonosított `<style>` elemet illeszt a dokumentumba. Ez szándékos: a Vite dinamikus CSS-kódhasítása Astro statikus buildben egyébként előre behúzná a map stylesheetet. A befecskendezés idempotens, és csak explicit térképnyitás után történik.
 
 A public stílusok attól még használhatják a később deklarált CSS-változókat, mert azok a computed-value fázisban oldódnak fel. Azonos specificitású deklarációknál viszont a későbbi `global.css` nyer, ezért változtatáskor mindig a buildelt `dist/index.html` sorrendjét és a tényleges kaszkádot ellenőrizd; ne csak a forrásfájlok koncepcionális rétegzésére hagyatkozz.
 
@@ -300,6 +343,8 @@ A fő reszponzív szerződés `760px`; ezt az `anteastra-ui.js`, az `anteastra-u
 
 Mobilon a dialog alsó lapként jelenik meg. Csak a belső tartalom görgethető, így a cím, fülek és műveleti gombok elérhetők maradnak. A drag handle mobilon rejtett; a 44×44-es fel/le gombok az elsődleges rendezési mód.
 
+A map dialog ugyanezt az alsólap-mintát használja, rögzített fejléc- és műveletsorral, görgethető középrésszel, legalább 44×44 pixeles térképvezérlőkkel és szűk nézetben egymás alá törő gombokkal. Vörös módban csak a csemperéteg kap erős, vörösre hangolt szűrőt; az attribúció, a vezérlők, a fókusz és a középső célkereszt külön, olvasható réteg marad.
+
 A vörös mód CSS-változókkal működik. Az állapotnak szövegből is érthetőnek kell maradnia; a jó/közepes/rossz szemantikus színek vörös módban szándékosan semlegesednek. Új komponens lehetőleg a meglévő tokeneket használja, ne rögzített világos színt.
 
 ## 14. Akadálymentességi szerződés
@@ -309,6 +354,8 @@ Megőrzendő minták:
 - szemantikus szakaszok, címsorok és definíciós listák;
 - skip link;
 - natív `<dialog>` cím- és leíráskapcsolattal;
+- a térkép fókuszálható `region`, nem `application`; a középre rögzített célkereszt pointerrel, érintéssel és a Leaflet nyílbillentyűs pásztázásával is használható;
+- a map draft koordinátája és betöltési/hibaállapota lokalizált élő régióban jelenik meg;
 - `tablist` / `tab` / `tabpanel` minta, nyílbillentyűk, Home és End;
 - billentyűzetes és érintéses fel/le alternatíva a drag mellett;
 - fókusz-visszaállítás bezárás után;
@@ -385,6 +432,7 @@ JavaScript-változásnál hasznos szintaktikai ellenőrzés:
 node --check src/scripts/app.js
 node --check src/scripts/astronomy.js
 node --check src/scripts/card-layout.js
+node --check src/scripts/location-map.js
 node --check public/anteastra-ui.js
 ```
 
@@ -395,6 +443,11 @@ Kézi regressziós mátrix:
 - normál és vörös mód;
 - GPS siker, elutasítás és timeout;
 - kézi koordináta, vesszős tizedes és határértékek;
+- térkép első és ismételt megnyitása, kattintás/koppintás, húzás, nyílbillentyűk, +/− zoom és fókusz-visszaállítás;
+- map dialog alkalmazás, Mégse, X, Escape és backdrop; elvetésnél a korábbi hely változatlan marad;
+- nincs Leaflet-, CSS- vagy OSM-kérés térképnyitás előtt; megnyitás után az attribúció mindig látható;
+- csempe-/chunkhiba mellett egyértelmű státusz és működő kézi koordináta-fallback;
+- aktuális ±85,0511° tartományon kívüli hely map figyelmeztetése, miközben a kézi ±90° továbbra is működik;
 - gyors egymás utáni helyszínváltás lassított hálózaton;
 - offline/Open-Meteo hiba: nincs régi vagy eszköz-zónás félrevezető adat;
 - eltérő eszköz- és célhelydátum/időzóna, valamint DST-közeli időpont;
@@ -406,6 +459,7 @@ Kézi regressziós mátrix:
 - legacy és sérült localStorage;
 - másolási műveletek;
 - build után canonical, hreflang, sitemap, robots és `VERSION.txt`.
+- build után nincs térképes `<link>` a kezdő HU/EN HTML-ben, a hash-elt dinamikus map chunk megvan, a `THIRD_PARTY_NOTICES.txt` kiszáll.
 
 ## 17. CI, deploy és release
 
