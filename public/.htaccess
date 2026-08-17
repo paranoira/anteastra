@@ -1,5 +1,6 @@
 Options -Indexes
 
+# Preserve ACME validation, otherwise force the canonical HTTPS host.
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
@@ -8,12 +9,15 @@ Options -Indexes
   RewriteRule ^ https://anteastra.space%{REQUEST_URI} [R=301,L,NE]
 </IfModule>
 
+# Minimal browser hardening; geolocation remains available only to this origin.
 <IfModule mod_headers.c>
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set Permissions-Policy "geolocation=(self)"
 </IfModule>
 
+# Public assets are not fingerprinted by Astro. Functional CSS/JS changes must
+# therefore receive a cache-busting query version in AppPage.astro.
 <IfModule mod_expires.c>
   ExpiresActive On
   ExpiresByType text/css "access plus 7 days"

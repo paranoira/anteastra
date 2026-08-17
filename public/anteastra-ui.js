@@ -1,4 +1,13 @@
 (() => {
+  /**
+   * Unbundled progressive visual enhancement.
+   *
+   * This public asset cannot import `src` modules and must not become an
+   * application-data source. It decorates the already usable semantic DOM and
+   * intentionally relies on documented ids/classes from AppPage and app.js.
+   */
+
+  // Shared responsive contract with global.css and both public stylesheets.
   const media = window.matchMedia("(max-width: 760px)");
   const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -49,11 +58,14 @@
     const target = media.matches ? mobileSlot : desktopSlot;
 
     if (!button || !target || button.parentElement === target) return;
+    // Move, never clone: element identity and card-layout event listeners survive.
     target.append(button);
     mobileSlot?.setAttribute("aria-hidden", media.matches ? "false" : "true");
   }
 
   function iconKeyFromCondition(value) {
+    // This intentionally recognizes localized rendered prose. Whenever weather
+    // wording changes in translations.js, verify both HU and EN mappings here.
     const text = String(value || "").trim().toLocaleLowerCase();
     if (!text || text === "—") return null;
     if (text.includes("zivatar") || text.includes("thunderstorm")) return "thunderstorm";
@@ -110,6 +122,9 @@
   }
 
   function getHourlySuitability(article) {
+    // DOM contract from app.js: rows are cloud, wind/gust, precipitation chance
+    // and amount, then dew. Numeric parsing assumes %, km/h and mm. This is a
+    // secondary presentation heuristic, not the primary 12-hour forecast state.
     const rows = [...article.querySelectorAll(".weather-hour-row")];
     if (rows.length < 4) return "mixed";
 
@@ -201,6 +216,8 @@
     const weatherCard = document.getElementById("weather-card");
     if (!weatherCard) return;
 
+    // Async app renders replace text/children. Coalesce mutations into one frame,
+    // disconnect while decorating, then reconnect to avoid a self-trigger loop.
     weatherObserver = new MutationObserver(() => {
       if (weatherFrame !== null) return;
       weatherFrame = window.requestAnimationFrame(() => {
@@ -235,6 +252,7 @@
   if (typeof media.addEventListener === "function") {
     media.addEventListener("change", placeLayoutSettingsButton);
   } else {
+    // Compatibility path for older Safari versions.
     media.addListener(placeLayoutSettingsButton);
   }
 })();

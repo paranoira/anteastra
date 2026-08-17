@@ -1,12 +1,15 @@
 name: Deploy AnteAstra
 
 on:
+  # Manual by design: the selected ref is deployed to the one production target.
+  # Choosing a feature branch is therefore a real production preview, not staging.
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
+  # Never overlap or cancel a partially completed FTPS production upload.
   group: anteastra-production
   cancel-in-progress: false
 
