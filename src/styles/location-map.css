@@ -6,14 +6,13 @@
 /* Keep a narrow underlying header from creating a page-level scrollbar behind the modal. */
 html:has(.map-location-dialog[open]) { overflow-x: hidden; }
 
+/* Desktop stays content-sized; a fixed shell height would make the 48dvh map
+ * create an unnecessary inner scrollbar even when the viewport has room. */
 .map-location-dialog {
   width: min(920px, calc(100% - 2rem));
   max-width: calc(100% - 2rem);
-  height: min(760px, calc(100dvh - 2rem));
   max-height: calc(100dvh - 2rem);
 }
-
-.map-location-panel { height: 100%; }
 
 .map-location-content {
   min-height: 0;
@@ -187,6 +186,8 @@ html:has(.map-location-dialog[open]) { overflow-x: hidden; }
     max-height: calc(100dvh - 1rem);
     margin: auto 0.5rem 0.5rem;
   }
+
+  .map-location-panel { height: 100%; }
 
   .map-location-stage {
     min-height: 260px;
