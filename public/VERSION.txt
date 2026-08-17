@@ -1,2 +1,2 @@
-AnteAstra v0.6.0
+AnteAstra v0.7.0
 Build for https://anteastra.space

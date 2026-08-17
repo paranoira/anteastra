@@ -2,7 +2,12 @@
 
 ## Kiadatlan
 
-- Opcionális, mobil- és billentyűzetbarát térképes észlelőhely-választó OpenStreetMap-csempékkel; a kézi koordinátabevitel továbbra is teljes értékű alternatíva.
+## 0.7.0 – 2026-08-17
+
+- Opcionális térképes észlelőhely-választás OpenStreetMap-csempékkel; a GPS és a kézi koordinátabevitel továbbra is teljes értékű alternatíva.
+- A térképes kijelölés tervezetként működik: csak jóváhagyás után vált helyszínt, megszakításkor a korábbi hely marad érvényben.
+- Mobil-, asztali-, billentyűzet- és vörösmód-barát térképdialog, késleltetett betöltéssel és látható OpenStreetMap-attribúcióval.
+- Asztali nézetben a térképdialog felesleges belső görgetés nélkül igazodik a tartalmához, rövid képernyőn pedig továbbra is biztonságosan görgethető.
 
 ## 0.6.0 – 2026-08-17
 

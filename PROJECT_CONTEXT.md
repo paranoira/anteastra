@@ -3,7 +3,7 @@
 > Living project memory for humans and coding agents.
 >
 > Last consolidated: 2026-08-17
-> Current stable baseline at consolidation: **v0.6.0**
+> Current stable baseline at consolidation: **v0.7.0**
 
 ## 1. What AnteAstra is
 
@@ -106,7 +106,7 @@ Do not imply that model-derived observing conditions are measurements at the use
 
 ## 4. Current technical baseline
 
-At v0.6.0 the application is:
+At v0.7.0 the application is:
 
 - Astro-based;
 - static output;
@@ -118,6 +118,7 @@ At v0.6.0 the application is:
 Current known baseline at consolidation:
 
 - Astro `7.1.4`;
+- Leaflet `1.9.4` for the optional map location picker;
 - SunCalc `2.0.1` for local Sun/Moon calculations;
 - package name `anteastra`;
 - static output;
@@ -268,7 +269,7 @@ The settings workflow now includes:
 - Cancel/X/Escape/backdrop discard behaviour;
 - persistent desktop drag and mobile/keyboard move controls inside the dialog.
 
-### Unreleased after v0.6.0 – optional map location picker
+### v0.7.0 – optional map location picker
 
 The location workflow also supports choosing an observing site on a map:
 
