@@ -3,7 +3,7 @@
 > Living project memory for humans and coding agents.
 >
 > Last consolidated: 2026-08-17
-> Current stable baseline at consolidation: **v0.5.0**
+> Current stable baseline at consolidation: **v0.6.0**
 
 ## 1. What AnteAstra is
 
@@ -105,7 +105,7 @@ Do not imply that model-derived observing conditions are measurements at the use
 
 ## 4. Current technical baseline
 
-At v0.5.0 the application is:
+At v0.6.0 the application is:
 
 - Astro-based;
 - static output;
@@ -251,16 +251,16 @@ Public-launch milestone included:
 - sitemap;
 - robots.txt.
 
-### Unreleased after v0.5.0 – observing context and settings clarity
+### v0.6.0 – observing context and settings clarity
 
-Implemented on `main` after the stable tag:
+The v0.6.0 release added:
 
 - Open Graph, Twitter/X and truthful `WebApplication` JSON-LD metadata;
 - bilingual contact/feedback links;
 - a combined astronomical-darkness and Moon card;
 - local Sun/Moon calculations with polar-day/night handling.
 
-The current settings feature adds:
+The settings workflow now includes:
 
 - separate Cards and Order tabs inside the settings dialog;
 - draft editing, committed only with OK;

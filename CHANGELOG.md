@@ -2,6 +2,8 @@
 
 ## Kiadatlan
 
+## 0.6.0 – 2026-08-17
+
 - Új, közös „Sötétség és Hold” kártya a csillagászati sötétség gyors áttekintéséhez.
 - Napnyugta, polgári, navigációs és csillagászati szürkületi időpontok a kiválasztott észlelőhelyhez.
 - Holdfázis, megvilágítottság, holdkelte, holdnyugta és az észlelési ablakhoz tartozó magassági információ.
