@@ -1,3 +1,13 @@
+/*
+ * Unbundled configurable-card and settings-dialog layer.
+ *
+ * Linked before the Astro-injected global bundle and built from its design tokens
+ * (CSS variables resolve regardless of declaration order). Equal-specificity
+ * global rules load later and win. Functional edits require a cache-busting
+ * query update in AppPage.astro.
+ */
+
+/* Settings launcher and compact icon controls. */
 .layout-tools {
   display: flex;
   justify-content: flex-end;
@@ -6,6 +16,7 @@
 
 .layout-settings-trigger,
 .layout-dialog-close,
+.layout-order-button,
 .card-icon-button {
   width: 38px;
   height: 38px;
@@ -22,6 +33,7 @@
 
 .layout-settings-trigger:hover,
 .layout-dialog-close:hover,
+.layout-order-button:hover:not(:disabled),
 .card-icon-button:hover:not(:disabled) {
   border-color: var(--accent);
   color: var(--text);
@@ -29,6 +41,8 @@
 
 .layout-settings-trigger:focus-visible,
 .layout-dialog-close:focus-visible,
+.layout-settings-tab:focus-visible,
+.layout-order-button:focus-visible,
 .card-icon-button:focus-visible {
   outline: none;
   box-shadow: var(--focus);
@@ -36,8 +50,9 @@
 
 .layout-settings-trigger svg,
 .layout-dialog-close svg,
-.card-icon-button svg,
-.layout-drag-handle svg {
+.layout-order-button svg,
+.layout-order-drag-handle svg,
+.card-icon-button svg {
   width: 20px;
   height: 20px;
   fill: none;
@@ -47,17 +62,13 @@
   stroke-linejoin: round;
 }
 
-.layout-icon-done { display: none; }
-body[data-layout-arranging="true"] .layout-icon-settings { display: none; }
-body[data-layout-arranging="true"] .layout-icon-done { display: block; }
-body[data-layout-arranging="true"] .layout-settings-trigger {
-  color: var(--success);
-  border-color: color-mix(in srgb, var(--success), var(--border) 55%);
-}
-
+/* Modal shell and fixed header/help structure. */
 .layout-settings-dialog {
-  width: min(440px, calc(100% - 1.5rem));
+  box-sizing: border-box;
+  width: min(500px, calc(100% - 1.5rem));
+  max-width: calc(100% - 1.5rem);
   max-height: min(680px, calc(100dvh - 2rem));
+  overflow: hidden;
   padding: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -71,7 +82,14 @@ body[data-layout-arranging="true"] .layout-settings-trigger {
   backdrop-filter: blur(3px);
 }
 
-.layout-settings-panel { padding: 1rem; }
+.layout-settings-panel {
+  box-sizing: border-box;
+  max-height: inherit;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 1rem;
+}
 
 .layout-settings-header {
   display: flex;
@@ -81,11 +99,68 @@ body[data-layout-arranging="true"] .layout-settings-trigger {
 }
 
 .layout-settings-header h2 { margin: 0; font-size: 1.35rem; }
-.layout-settings-help { margin: 0.8rem 0 1rem; color: var(--muted); font-size: 0.88rem; }
+.layout-settings-help { margin: 0.8rem 0; color: var(--muted); font-size: 0.88rem; }
 
+.layout-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* ARIA tabs and the only scrollable dialog region. Keeping scrolling here leaves
+ * the heading, tabs and action row reachable on short mobile screens. */
+.layout-settings-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  padding: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--surface);
+}
+
+.layout-settings-tab {
+  min-height: 44px;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid transparent;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.layout-settings-tab[aria-selected="true"] {
+  border-color: var(--border);
+  background: var(--surface-soft);
+  color: var(--text);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.layout-settings-content {
+  min-height: 0;
+  overflow-y: auto;
+  margin-top: 0.8rem;
+  padding-right: 0.15rem;
+  scrollbar-gutter: stable;
+}
+
+.layout-settings-tabpanel[hidden] { display: none; }
+
+/* Card visibility checklist. */
 .layout-visibility-list {
   display: grid;
   gap: 0.45rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 .layout-visibility-list label {
@@ -111,13 +186,93 @@ body[data-layout-arranging="true"] .layout-settings-trigger {
   accent-color: var(--accent);
 }
 
+/* Order editor: desktop drag enhancement plus persistent move controls. */
+.layout-order-help {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.layout-order-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.layout-order-item {
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.layout-order-item.is-dragging {
+  opacity: 0.55;
+  outline: 1px dashed var(--accent);
+  outline-offset: -2px;
+}
+
+.layout-order-drag-handle {
+  width: 28px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  cursor: grab;
+}
+
+.layout-order-drag-handle:active { cursor: grabbing; }
+
+.layout-order-copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.12rem;
+}
+
+.layout-order-copy strong {
+  overflow-wrap: anywhere;
+  font-size: 0.94rem;
+}
+
+.layout-order-copy small {
+  color: var(--muted);
+  font-size: 0.73rem;
+}
+
+.layout-order-item[data-visible="false"] .layout-order-copy strong { color: var(--muted); }
+.layout-order-item[data-visible="false"] .layout-order-copy small { font-weight: 750; }
+
+.layout-order-controls { display: flex; gap: 0.35rem; }
+
+.layout-order-button {
+  width: 42px;
+  height: 42px;
+  border-radius: 0.65rem;
+}
+
+.layout-order-button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Draft actions: Reset, Cancel and explicit OK commit. */
 .layout-settings-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
   margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
 }
 
+.layout-settings-actions #layout-reset-button { margin-right: auto; }
+
+/* Live configurable cards and collapsed/empty dashboard states. */
 .card-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -172,27 +327,6 @@ body[data-layout-arranging="true"] .layout-settings-trigger {
 .card-icon-button:disabled { opacity: 0.4; cursor: not-allowed; }
 .card-collapse-button .collapse-icon { transition: transform 140ms ease; }
 .layout-card.is-collapsed .card-collapse-button .collapse-icon { transform: rotate(180deg); }
-
-.layout-drag-handle {
-  width: 26px;
-  height: 32px;
-  display: none;
-  place-items: center;
-  flex: 0 0 auto;
-  color: var(--muted);
-  cursor: grab;
-}
-
-[data-layout-reorder-control] { display: none; }
-.card-layout.is-arranging .layout-drag-handle { display: grid; }
-.card-layout.is-arranging .card-icon-button[data-layout-reorder-control] { display: inline-grid; }
-
-.card-layout.is-arranging .layout-card {
-  outline: 1px dashed color-mix(in srgb, var(--accent), transparent 25%);
-  outline-offset: -1px;
-}
-
-.layout-card.is-dragging { opacity: 0.55; }
 
 .layout-card-body {
   padding: clamp(1rem, 2.5vw, 1.6rem);
@@ -261,17 +395,30 @@ body[data-layout-arranging="true"] .layout-settings-trigger {
 .card-layout-empty[hidden] { display: none; }
 .card-layout-empty p { margin-bottom: 0.75rem; }
 
+/* Mobile bottom sheet. Drag is hidden; 44px move buttons become primary. */
 @media (max-width: 760px) {
   .layout-tools { margin-top: -0.7rem; }
 
   .layout-settings-dialog {
     width: calc(100% - 1rem);
+    max-width: calc(100% - 1rem);
     max-height: calc(100dvh - 1rem);
     margin: auto 0.5rem 0.5rem;
   }
 
   .layout-settings-panel { padding: 0.85rem; }
-  .layout-settings-actions .button { flex: 1 1 0; min-width: 0; }
+  .layout-order-drag-handle { display: none; }
+  .layout-order-item { grid-template-columns: minmax(0, 1fr) auto; }
+  .layout-dialog-close,
+  .layout-order-button { width: 44px; height: 44px; }
+
+  .layout-settings-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .layout-settings-actions #layout-reset-button { margin-right: 0; }
+  .layout-settings-actions .button { min-width: 0; padding-inline: 0.8rem; }
 
   .layout-card-header {
     min-height: 56px;
@@ -305,11 +452,19 @@ body[data-layout-arranging="true"] .layout-settings-trigger {
   .time-panel .large-clock { font-size: clamp(2.2rem, 14vw, 3.7rem); }
 }
 
+/* Very narrow dialog: give Reset a full row above the commit actions. */
+@media (max-width: 360px) {
+  .layout-settings-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .layout-settings-actions #layout-reset-button { grid-column: 1 / -1; }
+}
+
+/* Protect compact card headers from long dynamic status labels. */
 @media (max-width: 430px) {
   .weather-card-header-actions .weather-status { display: none; }
   .card-collapsed-summary { max-width: 62vw; }
 }
 
+/* Card state remains clear without decorative transitions. */
 @media (prefers-reduced-motion: reduce) {
   .card-collapse-button .collapse-icon { transition: none; }
 }

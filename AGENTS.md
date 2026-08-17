@@ -160,6 +160,8 @@ Main cards are intentionally:
 
 Desktop and mobile controls may differ where appropriate.
 
+Visibility and ordering live in the settings dialog. Treat edits as a draft: only OK applies them; Cancel, close, Escape and backdrop dismissal must discard them.
+
 Do not remove:
 
 - mobile-accessible reorder controls;
@@ -280,13 +282,18 @@ Clearly treat forecast/model data as estimates.
 
 Do not imply site-level measurement precision.
 
-## Future astronomy features
+## Astronomy rules and future features
 
-Likely product-aligned future areas include:
+The current astronomy card already includes:
 
 - sunset and twilight;
 - astronomical darkness;
 - Moon phase/illumination/rise/set;
+
+Keep these values tied to the selected-location invariant. Their presentation should explain the observing window, remain neutral about whether a bright Moon is desirable, and acknowledge that terrain/local horizon are not modeled.
+
+Likely product-aligned future areas include:
+
 - seeing;
 - transparency;
 - saved observing locations.

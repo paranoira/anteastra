@@ -1,4 +1,11 @@
 ---
+/**
+ * Shared static page for both `/` and `/en`.
+ *
+ * The ids, data attributes and ARIA target relationships below are contracts
+ * with app.js, card-layout.js and the public progressive-enhancement layer.
+ * Rename them only together with every consumer.
+ */
 import "../styles/global.css";
 import { ui } from "../i18n/translations.js";
 
@@ -12,6 +19,16 @@ const enUrl = Astro.site ? new URL("/en", Astro.site) : null;
 const canonicalUrl = Astro.site ? new URL(canonicalPath, Astro.site) : null;
 const socialLocale = isEnglish ? "en_US" : "hu_HU";
 const alternateSocialLocale = isEnglish ? "hu_HU" : "en_US";
+// Settings-dialog registry. Keys must match card `data-card-key` values plus
+// DEFAULT_ORDER/CARD_LABELS in card-layout.js; add HU and EN labels together.
+const layoutCards = [
+  { key: "location", label: t.location.title },
+  { key: "astronomy", label: t.astronomy.title },
+  { key: "weather", label: t.weather.title },
+  { key: "coordinates", label: t.coordinates.title },
+  { key: "time", label: t.time.title },
+  { key: "timezone", label: t.timezone.title }
+];
 const structuredData = canonicalUrl
   ? {
       "@context": "https://schema.org",
@@ -49,7 +66,8 @@ const structuredData = canonicalUrl
     {huUrl && <link rel="alternate" hreflang="hu" href={huUrl} />}
     {enUrl && <link rel="alternate" hreflang="en" href={enUrl} />}
     {huUrl && <link rel="alternate" hreflang="x-default" href={huUrl} />}
-    <link rel="stylesheet" href="/card-layout.css" />
+    <!-- Public links precede Astro's injected global bundle; preserve the verified cascade and cache-bust functional changes. -->
+    <link rel="stylesheet" href="/card-layout.css?v=3" />
     <link rel="stylesheet" href="/anteastra-ui.css" />
     <title>{t.pageTitle}</title>
     {structuredData && <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />}
@@ -57,6 +75,7 @@ const structuredData = canonicalUrl
   <body>
     <a class="skip-link" href="#main">{t.skip}</a>
 
+    <!-- Shared header utilities; the same settings button is moved between the mobile and desktop slots. -->
     <header class="site-header">
       <div class="shell header-inner">
         <a class="brand" href={isEnglish ? "/en" : "/"} aria-label={t.homeAria}>
@@ -101,18 +120,23 @@ const structuredData = canonicalUrl
           title={t.common.settings}
           aria-haspopup="dialog"
           aria-controls="layout-settings-dialog"
-          aria-pressed="false"
         >
           <svg class="layout-icon layout-icon-settings" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M8 14v6" />
           </svg>
-          <svg class="layout-icon layout-icon-done" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="m5 12 4 4L19 6" />
-          </svg>
         </button>
       </div>
 
-      <dialog id="layout-settings-dialog" class="layout-settings-dialog" aria-labelledby="layout-settings-title">
+      <!--
+        Native modal with ARIA tabs. card-layout.js owns draft/commit state,
+        keyboard behavior, drag/move controls, dismissal and focus restoration.
+      -->
+      <dialog
+        id="layout-settings-dialog"
+        class="layout-settings-dialog"
+        aria-labelledby="layout-settings-title"
+        aria-describedby="layout-settings-help"
+      >
         <div class="layout-settings-panel">
           <div class="layout-settings-header">
             <div>
@@ -130,35 +154,123 @@ const structuredData = canonicalUrl
             </button>
           </div>
 
-          <p class="layout-settings-help">{t.common.settingsHelp}</p>
+          <p id="layout-settings-help" class="layout-settings-help">{t.common.settingsHelp}</p>
 
-          <div class="layout-visibility-list" aria-label={t.common.visibleCards}>
-            <label><input type="checkbox" data-card-visibility="location" checked /> <span>{t.location.title}</span></label>
-            <label><input type="checkbox" data-card-visibility="astronomy" checked /> <span>{t.astronomy.title}</span></label>
-            <label><input type="checkbox" data-card-visibility="weather" checked /> <span>{t.weather.title}</span></label>
-            <label><input type="checkbox" data-card-visibility="coordinates" checked /> <span>{t.coordinates.title}</span></label>
-            <label><input type="checkbox" data-card-visibility="time" checked /> <span>{t.time.title}</span></label>
-            <label><input type="checkbox" data-card-visibility="timezone" checked /> <span>{t.timezone.title}</span></label>
+          <div class="layout-settings-tabs" role="tablist" aria-label={t.common.settings}>
+            <button
+              id="layout-cards-tab"
+              class="layout-settings-tab"
+              type="button"
+              role="tab"
+              aria-selected="true"
+              aria-controls="layout-cards-panel"
+            >
+              {t.common.cardsTab}
+            </button>
+            <button
+              id="layout-order-tab"
+              class="layout-settings-tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="layout-order-panel"
+              tabindex="-1"
+            >
+              {t.common.orderTab}
+            </button>
+          </div>
+
+          <div class="layout-settings-content">
+            <section
+              id="layout-cards-panel"
+              class="layout-settings-tabpanel"
+              role="tabpanel"
+              aria-labelledby="layout-cards-tab"
+            >
+              <fieldset class="layout-visibility-list">
+                <legend class="layout-visually-hidden">{t.common.visibleCards}</legend>
+                {layoutCards.map((card) => (
+                  <label>
+                    <input type="checkbox" data-card-visibility={card.key} checked />
+                    <span>{card.label}</span>
+                  </label>
+                ))}
+              </fieldset>
+            </section>
+
+            <section
+              id="layout-order-panel"
+              class="layout-settings-tabpanel"
+              role="tabpanel"
+              aria-labelledby="layout-order-tab"
+              hidden
+            >
+              <p class="layout-order-help">{t.common.orderHelp}</p>
+              <ol id="layout-order-list" class="layout-order-list" aria-label={t.common.cardOrder}>
+                {layoutCards.map((card) => (
+                  <li class="layout-order-item" data-card-order-key={card.key}>
+                    <span
+                      class="layout-order-drag-handle"
+                      data-order-drag-handle
+                      draggable="true"
+                      title={t.common.drag}
+                      aria-hidden="true"
+                    >
+                      <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
+                    </span>
+                    <span class="layout-order-copy">
+                      <strong>{card.label}</strong>
+                      <small data-card-order-state>{t.common.visible}</small>
+                    </span>
+                    <span class="layout-order-controls">
+                      <button
+                        class="layout-order-button"
+                        type="button"
+                        data-order-move="up"
+                        aria-label={t.common.moveUpAria(card.label)}
+                        title={t.common.moveUp}
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+                      </button>
+                      <button
+                        class="layout-order-button"
+                        type="button"
+                        data-order-move="down"
+                        aria-label={t.common.moveDownAria(card.label)}
+                        title={t.common.moveDown}
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+              <p id="layout-order-status" class="layout-visually-hidden" role="status" aria-live="polite"></p>
+            </section>
           </div>
 
           <div class="layout-settings-actions">
-            <button id="layout-arrange-button" class="button button-secondary" type="button">
-              {t.common.arrange}
-            </button>
             <button id="layout-reset-button" class="button button-quiet" type="button">
               {t.common.reset}
+            </button>
+            <button id="layout-cancel-button" class="button button-secondary" type="button">
+              {t.common.cancel}
+            </button>
+            <button id="layout-apply-button" class="button button-primary" type="button">
+              {t.common.confirm}
             </button>
           </div>
         </div>
       </dialog>
 
+      <!--
+        Configurable-card contract: every direct child needs a unique data-card-key,
+        labelled heading, body id and collapse-button aria-controls relationship.
+      -->
       <div id="card-layout" class="card-layout">
         <section class="action-card layout-card" data-card-key="location" aria-labelledby="location-title">
           <header class="layout-card-header">
             <div class="layout-card-heading">
-              <span class="layout-drag-handle" data-layout-reorder-control title={t.common.drag} aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
-              </span>
               <div class="layout-card-title-block">
                 <p class="eyebrow">{t.location.eyebrow}</p>
                 <h2 id="location-title">{t.location.title}</h2>
@@ -166,12 +278,6 @@ const structuredData = canonicalUrl
               </div>
             </div>
             <div class="layout-card-header-actions">
-              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label={t.common.moveUpAria(t.location.title)} title={t.common.moveUp}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
-              </button>
-              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label={t.common.moveDownAria(t.location.title)} title={t.common.moveDown}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
-              </button>
               <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-location" aria-label={t.common.collapseAria(t.location.title)} title={t.common.collapse}>
                 <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
               </button>
@@ -211,9 +317,6 @@ const structuredData = canonicalUrl
         <section id="night-sky-card" class="data-card night-sky-card layout-card" data-card-key="astronomy" aria-labelledby="night-sky-title">
           <header class="layout-card-header">
             <div class="layout-card-heading">
-              <span class="layout-drag-handle" data-layout-reorder-control title={t.common.drag} aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
-              </span>
               <div class="layout-card-title-block">
                 <p class="eyebrow">{t.astronomy.eyebrow}</p>
                 <h2 id="night-sky-title">{t.astronomy.title}</h2>
@@ -221,12 +324,6 @@ const structuredData = canonicalUrl
             </div>
             <div class="layout-card-header-actions astronomy-card-header-actions">
               <span id="night-sky-status" class="astronomy-status" data-state="idle">{t.weather.noData}</span>
-              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label={t.common.moveUpAria(t.astronomy.title)} title={t.common.moveUp}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
-              </button>
-              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label={t.common.moveDownAria(t.astronomy.title)} title={t.common.moveDown}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
-              </button>
               <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-astronomy" aria-label={t.common.collapseAria(t.astronomy.title)} title={t.common.collapse}>
                 <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
               </button>
@@ -290,9 +387,6 @@ const structuredData = canonicalUrl
         <section id="weather-card" class="weather-card layout-card" data-card-key="weather" aria-labelledby="weather-title">
           <header class="layout-card-header">
             <div class="layout-card-heading">
-              <span class="layout-drag-handle" data-layout-reorder-control title={t.common.drag} aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
-              </span>
               <div class="layout-card-title-block">
                 <p class="eyebrow">{t.weather.eyebrow}</p>
                 <h2 id="weather-title">{t.weather.title}</h2>
@@ -302,12 +396,6 @@ const structuredData = canonicalUrl
               <span id="weather-status-badge" class="weather-status" data-state="idle">{t.weather.noData}</span>
               <button class="card-icon-button" id="refresh-weather-button" type="button" disabled aria-label={t.weather.refreshAria} title={t.common.refresh}>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M6.5 9a7 7 0 0 1 11.5-2.5L20 11M4 13l2 4.5A7 7 0 0 0 17.5 15" /></svg>
-              </button>
-              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label={t.common.moveUpAria(t.weather.title)} title={t.common.moveUp}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
-              </button>
-              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label={t.common.moveDownAria(t.weather.title)} title={t.common.moveDown}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
               </button>
               <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-weather" aria-label={t.common.collapseAria(t.weather.title)} title={t.common.collapse}>
                 <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
@@ -365,9 +453,6 @@ const structuredData = canonicalUrl
         <section class="data-card layout-card" data-card-key="coordinates" aria-labelledby="coordinates-title">
           <header class="layout-card-header">
             <div class="layout-card-heading">
-              <span class="layout-drag-handle" data-layout-reorder-control title={t.common.drag} aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
-              </span>
               <div class="layout-card-title-block">
                 <p class="eyebrow">{t.coordinates.eyebrow}</p>
                 <h2 id="coordinates-title">{t.coordinates.title}</h2>
@@ -375,12 +460,6 @@ const structuredData = canonicalUrl
             </div>
             <div class="layout-card-header-actions">
               <span id="location-source" class="badge">{t.weather.noData}</span>
-              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label={t.common.moveUpAria(t.coordinates.title)} title={t.common.moveUp}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
-              </button>
-              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label={t.common.moveDownAria(t.coordinates.title)} title={t.common.moveDown}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
-              </button>
               <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-coordinates" aria-label={t.common.collapseAria(t.coordinates.title)} title={t.common.collapse}>
                 <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
               </button>
@@ -421,21 +500,12 @@ const structuredData = canonicalUrl
         <section class="data-card layout-card" data-card-key="time" aria-labelledby="time-title">
           <header class="layout-card-header">
             <div class="layout-card-heading">
-              <span class="layout-drag-handle" data-layout-reorder-control title={t.common.drag} aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
-              </span>
               <div class="layout-card-title-block">
                 <p class="eyebrow">{t.time.eyebrow}</p>
                 <h2 id="time-title">{t.time.title}</h2>
               </div>
             </div>
             <div class="layout-card-header-actions">
-              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label={t.common.moveUpAria(t.time.title)} title={t.common.moveUp}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
-              </button>
-              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label={t.common.moveDownAria(t.time.title)} title={t.common.moveDown}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
-              </button>
               <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-time" aria-label={t.common.collapseAria(t.time.title)} title={t.common.collapse}>
                 <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
               </button>
@@ -463,21 +533,12 @@ const structuredData = canonicalUrl
         <section class="data-card layout-card" data-card-key="timezone" aria-labelledby="timezone-title">
           <header class="layout-card-header">
             <div class="layout-card-heading">
-              <span class="layout-drag-handle" data-layout-reorder-control title={t.common.drag} aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" /></svg>
-              </span>
               <div class="layout-card-title-block">
                 <p class="eyebrow">{t.timezone.eyebrow}</p>
                 <h2 id="timezone-title">{t.timezone.title}</h2>
               </div>
             </div>
             <div class="layout-card-header-actions">
-              <button class="card-icon-button" type="button" data-move="up" data-layout-reorder-control aria-label={t.common.moveUpAria(t.timezone.title)} title={t.common.moveUp}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
-              </button>
-              <button class="card-icon-button" type="button" data-move="down" data-layout-reorder-control aria-label={t.common.moveDownAria(t.timezone.title)} title={t.common.moveDown}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
-              </button>
               <button class="card-icon-button card-collapse-button" type="button" data-collapse-toggle aria-expanded="true" aria-controls="card-body-timezone" aria-label={t.common.collapseAria(t.timezone.title)} title={t.common.collapse}>
                 <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
               </button>
@@ -512,6 +573,7 @@ const structuredData = canonicalUrl
         </section>
       </div>
 
+      <!-- This escape hatch must remain usable when every configurable card is hidden. -->
       <div id="card-layout-empty" class="card-layout-empty" hidden>
         <p>{t.empty.text}</p>
         <button id="card-layout-empty-settings" class="button button-secondary" type="button">{t.empty.button}</button>
@@ -547,6 +609,7 @@ const structuredData = canonicalUrl
       </div>
     </footer>
 
+    <!-- app.js owns data; card-layout.js owns persisted card UI; the public script only decorates. -->
     <script>
       import { initApp } from "../scripts/app.js";
       import { initCardLayout } from "../scripts/card-layout.js";
