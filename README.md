@@ -2,11 +2,14 @@
 
 Gyors hely-, idő-, időjárás- és égállapot-segéd amatőr csillagászoknak.
 
-Éles oldal: https://anteastra.space
+Élő alkalmazás:
+
+- Magyar: [anteastra.space](https://anteastra.space/)
+- English: [anteastra.space/en](https://anteastra.space/en)
 
 ## Fő funkciók
 
-- GPS-alapú vagy kézzel megadott észlelőhely.
+- GPS-szel, kézi koordinátával vagy opcionális térképes kijelöléssel megadott észlelőhely.
 - Pontos koordináták, helyi idő, UTC és időzónaadatok.
 - Észlelésközpontú időjárási összefoglaló és 12 órás előrejelzés.
 - Csillagászati sötétség, szürkületi időpontok és Holdállás egy közös kártyán.
@@ -30,6 +33,8 @@ npm run dev
 Az Astro fejlesztői szervere ezután kiírja a helyi címet.
 
 Az architektúrát, az adatfolyamokat, a bővítési recepteket és a teljes ellenőrzési mátrixot a [fejlesztői kézikönyv](DEVELOPMENT.md) tartalmazza.
+
+A böngészőbe csomagolt külső könyvtárak licenceit a [`public/THIRD_PARTY_NOTICES.txt`](public/THIRD_PARTY_NOTICES.txt) fájl tartalmazza.
 
 ## Éles build
 

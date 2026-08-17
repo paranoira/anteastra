@@ -93,7 +93,8 @@ The current UI explains that:
 
 - the browser asks for location permission only on request;
 - saved location/layout data remain in the browser where applicable;
-- coordinates may be sent to external services such as Open-Meteo when needed for weather, elevation or time-zone related data.
+- coordinates may be sent to external services such as Open-Meteo when needed for weather, elevation or time-zone related data;
+- opening the optional map requests visible-area tiles directly from OpenStreetMap, which receives normal web-request metadata and an approximate viewed area.
 
 Do not claim stronger privacy guarantees than the implementation actually provides.
 
@@ -267,6 +268,18 @@ The settings workflow now includes:
 - Cancel/X/Escape/backdrop discard behaviour;
 - persistent desktop drag and mobile/keyboard move controls inside the dialog.
 
+### Unreleased after v0.6.0 – optional map location picker
+
+The location workflow also supports choosing an observing site on a map:
+
+- the feature pins Leaflet `1.9.4`;
+- Leaflet and the map styles load only after explicit map opening;
+- standard OpenStreetMap tiles provide geographic context with visible attribution;
+- moving, tapping or keyboard-panning changes only a dialog draft;
+- applying the draft goes through the same selected-location transaction as manual coordinates;
+- Cancel, X, Escape and backdrop discard the draft;
+- manual latitude/longitude entry remains a complete fallback, including beyond the Web Mercator display range.
+
 ## 6. Current information architecture
 
 The application currently revolves around configurable cards.
@@ -276,12 +289,15 @@ The application currently revolves around configurable cards.
 Purpose:
 
 - request browser geolocation;
+- optionally choose coordinates on a map;
 - allow manual coordinates;
 - establish the location used by downstream data.
 
 Important behaviour:
 
 - browser location permission only after user action;
+- map tiles load only after explicit user action and the UI explains the external request;
+- map interaction is draft-only until the user applies the selected coordinates;
 - changing location must invalidate stale dependent data;
 - manual coordinates are a first-class option, not merely a fallback.
 

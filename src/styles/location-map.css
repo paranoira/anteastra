@@ -1,0 +1,216 @@
+/*
+ * Lazy map-picker layer. Imported only with location-map.js, after Leaflet's
+ * own stylesheet, so the initial AnteAstra page does not download map assets.
+ */
+
+/* Keep a narrow underlying header from creating a page-level scrollbar behind the modal. */
+html:has(.map-location-dialog[open]) { overflow-x: hidden; }
+
+/* Desktop stays content-sized; a fixed shell height would make the 48dvh map
+ * create an unnecessary inner scrollbar even when the viewport has room. */
+.map-location-dialog {
+  width: min(920px, calc(100% - 2rem));
+  max-width: calc(100% - 2rem);
+  max-height: calc(100dvh - 2rem);
+}
+
+.map-location-content {
+  min-height: 0;
+  display: grid;
+  gap: 0.75rem;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+  scrollbar-gutter: stable;
+}
+
+.map-location-stage {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-height: 280px;
+  height: clamp(300px, 48dvh, 470px);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--bg);
+}
+
+.map-location-canvas {
+  width: 100%;
+  height: 100%;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  opacity: 0.2;
+}
+
+.map-location-stage[data-ready="true"] .map-location-canvas { opacity: 1; }
+
+.map-location-canvas:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+/* Fixed target: the map moves under this shape for pointer, touch and keyboard. */
+.map-location-center-marker {
+  position: absolute;
+  z-index: 700;
+  top: 50%;
+  left: 50%;
+  width: 38px;
+  height: 38px;
+  display: none;
+  transform: translate(-50%, -50%);
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  background: var(--surface-raised);
+  background: color-mix(in srgb, var(--surface-raised), transparent 18%);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.map-location-stage[data-ready="true"] .map-location-center-marker { display: block; }
+
+.map-location-center-marker::before,
+.map-location-center-marker::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: var(--accent-strong);
+  transform: translate(-50%, -50%);
+}
+
+.map-location-center-marker::before { width: 18px; height: 2px; }
+.map-location-center-marker::after { width: 2px; height: 18px; }
+
+.map-location-readout {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: var(--surface);
+}
+
+.map-location-readout > span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.map-location-readout output {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.map-location-status {
+  min-height: 1.4rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.map-location-status[data-state="loading"] { color: var(--warning); }
+.map-location-status[data-state="error"] { color: var(--danger); }
+
+.map-location-privacy {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.map-location-actions { justify-content: flex-end; }
+
+/* Leaflet controls use the same theme tokens and retain 44px touch targets. */
+.map-location-canvas .leaflet-control-zoom {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow);
+}
+
+.map-location-canvas .leaflet-control-zoom a,
+.map-location-canvas .leaflet-control-zoom a:hover {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text);
+  line-height: 44px;
+}
+
+.map-location-canvas .leaflet-control-zoom a:last-child { border-bottom: 0; }
+.map-location-canvas .leaflet-control-zoom a.leaflet-disabled { color: var(--muted); opacity: 0.55; }
+
+.map-location-canvas .leaflet-control-zoom a:focus-visible,
+.map-location-canvas .leaflet-control-attribution a:focus-visible {
+  outline: none;
+  box-shadow: inset var(--focus);
+}
+
+.map-location-canvas .leaflet-control-attribution {
+  max-width: min(70vw, 520px);
+  padding: 0.2rem 0.35rem;
+  border-radius: 0.35rem 0 0 0;
+  background: var(--surface-raised);
+  background: color-mix(in srgb, var(--surface-raised), transparent 8%);
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.map-location-canvas .leaflet-control-attribution a { color: var(--accent-strong); }
+.map-location-canvas .leaflet-tile-pane { filter: brightness(0.72) saturate(0.72) contrast(1.1); }
+
+:root[data-theme="red"] .map-location-canvas .leaflet-tile-pane {
+  filter: grayscale(1) sepia(1) saturate(6) hue-rotate(310deg) brightness(0.28) contrast(1.35);
+}
+
+:root[data-theme="red"] .map-location-center-marker { box-shadow: none; }
+
+@media (max-width: 760px) {
+  .map-location-dialog {
+    width: calc(100% - 1rem);
+    max-width: calc(100% - 1rem);
+    height: calc(100dvh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    margin: auto 0.5rem 0.5rem;
+  }
+
+  .map-location-panel { height: 100%; }
+
+  .map-location-stage {
+    min-height: 260px;
+    height: min(46dvh, 420px);
+  }
+
+  .map-location-readout { align-items: flex-start; flex-direction: column; }
+  .map-location-readout output { text-align: left; }
+  .map-location-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .map-location-actions .button { min-width: 0; }
+}
+
+@media (max-width: 360px) and (min-height: 761px) {
+  .map-location-actions { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) and (max-height: 760px) {
+  /* A visible non-map surface lets touch users scroll past Leaflet's drag area. */
+  .map-location-readout { order: -1; }
+  .map-location-stage { min-height: 120px; height: 24dvh; }
+  .map-location-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-location-canvas { scroll-behavior: auto; }
+}
