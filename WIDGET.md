@@ -6,9 +6,10 @@ The compact widget is available at:
 https://anteastra.space/widget/
 ```
 
-It is designed for a roughly 280–360 px wide sidebar. Its height is normally
-about 330 px and grows while the location controls are open. The widget sends
-its current content height to the parent page with an
+It is designed for a roughly 250–360 px wide sidebar. Its height is about 400 px
+at 320 px width; below 285 px the forecast becomes a more legible two-row layout
+and the widget is about 510 px high. It grows while the location controls are
+open. The widget sends its current content height to the parent page with an
 `anteastra:widget-height` `postMessage` event.
 
 ## Suggested embed
@@ -19,7 +20,7 @@ its current content height to the parent page with an
   title="AnteAstra észlelési előrejelzés"
   src="https://anteastra.space/widget/?lang=hu"
   width="100%"
-  height="340"
+  height="520"
   loading="lazy"
   allow="geolocation"
   style="display:block;max-width:360px;border:0"
@@ -61,9 +62,11 @@ between the two supported languages from the visitor's browser language.
 ## Data and future extension
 
 The first version shows the local date, six two-hour samples from the next
-twelve hours with a weather pictogram and cloud percentage, plus Moon phase,
-illumination, rise and set. Weather and time-zone data come from Open-Meteo;
-Moon data is calculated locally with the existing astronomy module.
+twelve hours with weather pictograms, cloud-cover bars and an observing-quality
+rating, plus Moon phase, illumination, rise and set. The rating uses cloud,
+precipitation, wind and dew-related forecast inputs and is communicated by both
+colour and a symbol. Weather and time-zone data come from Open-Meteo; Moon data
+is calculated locally with the existing astronomy module.
 
 The planned “top three visible sky events” section is intentionally not part of
 the first version. It needs a separately selected ephemeris source and a clear,

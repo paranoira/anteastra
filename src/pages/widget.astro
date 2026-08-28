@@ -59,7 +59,15 @@ import "../styles/widget.css";
       <p id="widget-status" class="widget-status" role="status" aria-live="polite"></p>
 
       <section class="forecast-section" aria-labelledby="forecast-title">
-        <h2 id="forecast-title" class="visually-hidden">Előrejelzés</h2>
+        <div class="forecast-heading">
+          <h2 id="forecast-title">12 órás előrejelzés</h2>
+          <span class="cloud-key">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6.5 18h11a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.84 8.6 4.7 4.7 0 0 0 6.5 18Z"></path>
+            </svg>
+            <span id="cloud-key-label">Felhőzet</span> %
+          </span>
+        </div>
         <ol id="forecast-list" class="forecast-list" aria-busy="true">
           {Array.from({ length: 6 }, (_, index) => (
             <li class="forecast-item forecast-placeholder" aria-hidden="true" data-placeholder={index}>
@@ -67,6 +75,11 @@ import "../styles/widget.css";
             </li>
           ))}
         </ol>
+        <div class="quality-legend" aria-hidden="true">
+          <span data-state="good"><b>✓</b><span id="quality-good-label">Jó</span></span>
+          <span data-state="mixed"><b>~</b><span id="quality-mixed-label">Változó</span></span>
+          <span data-state="poor"><b>!</b><span id="quality-poor-label">Gyenge</span></span>
+        </div>
       </section>
 
       <section class="moon-section" aria-labelledby="moon-title">

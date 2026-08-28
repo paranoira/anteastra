@@ -13,7 +13,9 @@ const DEFAULT_LOCATION = Object.freeze({
 
 const copy = {
   hu: {
-    forecast: "A következő 12 óra időjárási előrejelzése",
+    forecast: "12 órás előrejelzés",
+    cloudCover: "Felhőzet",
+    quality: { good: "Jó", mixed: "Változó", poor: "Gyenge" },
     defaultLocation: "Csillagtanya",
     myLocation: "Saját helyzet",
     gpsName: "Saját helyzet",
@@ -32,12 +34,14 @@ const copy = {
     moonrise: "Holdkelte",
     moonset: "Holdnyugta",
     noEvent: "—",
-    fullSite: "Teljes AnteAstra",
+    fullSite: "Részletes előrejelzés",
     updated: "Frissítve",
     cloud: "felhő"
   },
   en: {
-    forecast: "Weather forecast for the next 12 hours",
+    forecast: "12-hour forecast",
+    cloudCover: "Cloud cover",
+    quality: { good: "Good", mixed: "Variable", poor: "Poor" },
     defaultLocation: "Csillagtanya",
     myLocation: "My location",
     gpsName: "My location",
@@ -56,7 +60,7 @@ const copy = {
     moonrise: "Moonrise",
     moonset: "Moonset",
     noEvent: "—",
-    fullSite: "Full AnteAstra",
+    fullSite: "Detailed forecast",
     updated: "Updated",
     cloud: "cloud"
   }
@@ -127,7 +131,8 @@ function mapUi() {
     "widget-date", "location-toggle", "location-controls", "location-name",
     "default-location-button", "gps-location-button", "coordinate-form", "latitude-input",
     "longitude-input", "latitude-label", "longitude-label", "coordinate-submit", "widget-status",
-    "forecast-title", "forecast-list", "moon-visual", "moon-lit-path", "moon-title",
+    "forecast-title", "forecast-list", "cloud-key-label", "quality-good-label",
+    "quality-mixed-label", "quality-poor-label", "moon-visual", "moon-lit-path", "moon-title",
     "moon-phase", "moon-illumination", "moonrise-label", "moonset-label", "moonrise-time",
     "moonset-time", "full-site-link"
   ].forEach((id) => {
@@ -152,6 +157,10 @@ function applyCopy() {
   ui.longitudeInput.setAttribute("aria-label", text.longitude);
   ui.coordinateSubmit.setAttribute("aria-label", text.apply);
   ui.forecastTitle.textContent = text.forecast;
+  ui.cloudKeyLabel.textContent = text.cloudCover;
+  ui.qualityGoodLabel.textContent = text.quality.good;
+  ui.qualityMixedLabel.textContent = text.quality.mixed;
+  ui.qualityPoorLabel.textContent = text.quality.poor;
   ui.moonTitle.textContent = text.moon;
   ui.moonriseLabel.textContent = text.moonrise;
   ui.moonsetLabel.textContent = text.moonset;
@@ -302,9 +311,16 @@ async function fetchSnapshot(location, signal) {
     latitude: location.latitude.toFixed(6),
     longitude: location.longitude.toFixed(6),
     current: "weather_code,cloud_cover",
-    hourly: "weather_code,cloud_cover",
+    hourly: [
+      "temperature_2m", "relative_humidity_2m", "dew_point_2m",
+      "precipitation_probability", "precipitation", "weather_code", "cloud_cover",
+      "wind_speed_10m", "wind_gusts_10m"
+    ].join(","),
     timezone: "auto",
-    forecast_days: "2"
+    forecast_days: "2",
+    temperature_unit: "celsius",
+    wind_speed_unit: "kmh",
+    precipitation_unit: "mm"
   });
   const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`, {
     headers: { Accept: "application/json" },
@@ -323,8 +339,15 @@ async function fetchSnapshot(location, signal) {
     const index = startIndex + localIndex;
     return {
       time,
+      temperature: numberOrNull(data.hourly?.temperature_2m?.[index]),
+      humidity: numberOrNull(data.hourly?.relative_humidity_2m?.[index]),
+      dewPoint: numberOrNull(data.hourly?.dew_point_2m?.[index]),
+      precipitationProbability: numberOrNull(data.hourly?.precipitation_probability?.[index]),
+      precipitation: numberOrNull(data.hourly?.precipitation?.[index]),
       weatherCode: numberOrNull(data.hourly?.weather_code?.[index]),
-      cloudCover: numberOrNull(data.hourly?.cloud_cover?.[index])
+      cloudCover: numberOrNull(data.hourly?.cloud_cover?.[index]),
+      windSpeed: numberOrNull(data.hourly?.wind_speed_10m?.[index]),
+      windGusts: numberOrNull(data.hourly?.wind_gusts_10m?.[index])
     };
   });
 
@@ -389,24 +412,81 @@ function renderForecast(hours) {
   const sampledHours = hours.filter((_, index) => index % 2 === 0).slice(0, 6);
   const items = sampledHours.map((hour) => {
     const condition = getWeatherCondition(hour.weatherCode);
+    const quality = getObservingQuality(hour, condition.icon);
     const cloud = Number.isFinite(hour.cloudCover) ? `${Math.round(hour.cloudCover)}%` : "—";
     const item = document.createElement("li");
     item.className = "forecast-item";
-    item.setAttribute("aria-label", `${formatHour(hour.time)}, ${condition.text}, ${cloud} ${copy[state.locale].cloud}`);
+    item.dataset.observingState = quality;
+    item.setAttribute(
+      "aria-label",
+      `${formatHour(hour.time)}, ${condition.text}, ${cloud} ${copy[state.locale].cloud}, ${copy[state.locale].quality[quality]}`
+    );
 
     const time = document.createElement("time");
     time.className = "forecast-time";
     time.dateTime = hour.time;
     time.textContent = formatHour(hour.time);
     const icon = createWeatherIcon(condition.icon);
+    const qualityBadge = document.createElement("span");
+    qualityBadge.className = "quality-badge";
+    qualityBadge.dataset.state = quality;
+    qualityBadge.textContent = quality === "good" ? "✓" : quality === "poor" ? "!" : "~";
+    qualityBadge.setAttribute("aria-hidden", "true");
+    const cloudBar = document.createElement("span");
+    cloudBar.className = "forecast-cloud-bar";
+    cloudBar.setAttribute("aria-hidden", "true");
+    const cloudFill = document.createElement("span");
+    cloudFill.style.height = `${clamp(hour.cloudCover ?? 0, 0, 100)}%`;
+    cloudBar.append(cloudFill);
     const cloudValue = document.createElement("span");
     cloudValue.className = "forecast-cloud";
     cloudValue.textContent = cloud;
-    item.append(time, icon, cloudValue);
+    item.append(qualityBadge, time, icon, cloudBar, cloudValue);
     return item;
   });
   ui.forecastList.replaceChildren(...items);
   ui.forecastList.setAttribute("aria-busy", "false");
+}
+
+function getObservingQuality(hour, condition) {
+  // Keep these field-oriented thresholds synchronized with the main page's
+  // hourly enhancement. The rating is a forecast heuristic, not a measurement.
+  const dewState = getDewState(hour.temperature, hour.dewPoint, hour.humidity);
+  const blockingCondition = ["fog", "drizzle", "rain", "snow", "thunderstorm"].includes(condition);
+
+  if (
+    blockingCondition ||
+    (hour.cloudCover ?? 100) > 70 ||
+    (hour.precipitationProbability ?? 100) > 40 ||
+    (hour.precipitation ?? 100) > 0.1 ||
+    (hour.windSpeed ?? 100) > 28 ||
+    (hour.windGusts ?? 100) > 45 ||
+    dewState === "high"
+  ) {
+    return "poor";
+  }
+
+  if (
+    (hour.cloudCover ?? 100) <= 30 &&
+    (hour.precipitationProbability ?? 100) <= 20 &&
+    (hour.precipitation ?? 100) <= 0.1 &&
+    (hour.windSpeed ?? 100) <= 20 &&
+    (hour.windGusts ?? 100) <= 35 &&
+    dewState === "low"
+  ) {
+    return "good";
+  }
+
+  return "mixed";
+}
+
+function getDewState(temperature, dewPoint, humidity) {
+  if (!Number.isFinite(temperature) || !Number.isFinite(dewPoint)) return "unknown";
+  const gap = Math.max(0, temperature - dewPoint);
+  const humid = Number.isFinite(humidity) ? humidity : 0;
+  if (gap <= 1.5 || humid >= 92) return "high";
+  if (gap <= 3.5 || humid >= 82) return "medium";
+  return "low";
 }
 
 function renderMoon(elevation) {
@@ -494,6 +574,10 @@ function setStatus(message, stateName = "") {
 function numberOrNull(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
+}
+
+function clamp(value, minimum, maximum) {
+  return Math.min(maximum, Math.max(minimum, value));
 }
 
 function reportHeight() {
