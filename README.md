@@ -15,7 +15,7 @@ Gyors hely-, idő-, időjárás- és égállapot-segéd amatőr csillagászoknak
 - Csillagászati sötétség, szürkületi időpontok és Holdállás egy közös kártyán.
 - Kétfüles beállításdialogban átrendezhető és elrejthető, a főoldalon összecsukható kártyák helyi mentéssel.
 - Magyar és angol felület, mobilos használat és vörös észlelési mód.
-- Beágyazható, automatikusan lokalizált mini widget a `/widget` útvonalon; integrációs példa a [`WIDGET.md`](WIDGET.md) fájlban.
+- Beágyazható, automatikusan lokalizált mini widget a `/widget/` útvonalon; integrációs példa a [`WIDGET.md`](WIDGET.md) fájlban.
 
 ## Fejlesztői környezet
 

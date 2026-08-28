@@ -3,7 +3,7 @@
 The compact widget is available at:
 
 ```text
-https://anteastra.space/widget
+https://anteastra.space/widget/
 ```
 
 It is designed for a roughly 280–360 px wide sidebar. Its height is normally
@@ -17,7 +17,7 @@ its current content height to the parent page with an
 <iframe
   id="anteastra-widget"
   title="AnteAstra észlelési előrejelzés"
-  src="https://anteastra.space/widget?lang=hu"
+  src="https://anteastra.space/widget/?lang=hu"
   width="100%"
   height="340"
   loading="lazy"
