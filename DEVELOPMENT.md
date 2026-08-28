@@ -63,13 +63,16 @@ Ne kezdj feature-munkát közvetlenül a `main` ágon. Ne írj felül ismeretlen
 |---|---|
 | `src/pages/index.astro` | Vékony HU route, a közös oldalnak `lang="hu"` értéket ad. |
 | `src/pages/en/index.astro` | Vékony EN route, a közös oldalnak `lang="en"` értéket ad. |
+| `src/pages/widget.astro` | Önálló, iframe-be ágyazható, kompakt időjárás- és Hold-nézet. |
 | `src/components/AppPage.astro` | Közös statikus, szemantikus oldalváz, SEO, dialog és minden fő kártya. |
 | `src/i18n/translations.js` | A HU és EN felületi, státusz- és formázási szövegek egyetlen forrása. |
 | `src/scripts/app.js` | Helyszín, Open-Meteo-adatok, alkalmazásállapot és renderelés. |
 | `src/scripts/astronomy.js` | DOM-független nap-/holdszámítás a rögzített SunCalc verzióval. |
 | `src/scripts/card-layout.js` | Kártyasorrend, láthatóság, összecsukás, dialog draft és localStorage. |
 | `src/scripts/location-map.js` | Csak megnyitáskor betöltött Leaflet-adapter, térképdraft és OSM-csempék. |
+| `src/scripts/widget.js` | A widget helyszíntranzakciója, minimális Open-Meteo-lekérése, lokalizálása és renderelése. |
 | `src/styles/global.css` | Astro által feldolgozott, fingerprintelt alaptéma és domainstílusok. |
+| `src/styles/widget.css` | A főoldaltól elszigetelt, keskeny beágyazásra optimalizált widgetstílus. |
 | `src/styles/location-map.css` | A Leaflet-adapterrel együtt, késleltetve injektált térkép- és vörösmód-stílusok. |
 | `public/card-layout.css` | Bundle-olatlan kártya-/dialogstílusok. |
 | `public/anteastra-ui.js` | Progresszív vizuális kiegészítés: mobil settings-gomb és időjárás-dekoráció. |

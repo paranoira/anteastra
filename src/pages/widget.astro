@@ -1,0 +1,105 @@
+---
+import "../styles/widget.css";
+---
+
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#07111f" />
+    <title>AnteAstra widget</title>
+  </head>
+  <body>
+    <main class="widget" aria-labelledby="widget-title">
+      <header class="widget-header">
+        <a class="widget-brand" href="/" target="_blank" rel="noopener" id="widget-title">
+          <span aria-hidden="true">✦</span>
+          <strong>AnteAstra</strong>
+        </a>
+        <time id="widget-date" class="widget-date">—</time>
+      </header>
+
+      <section class="location-section" aria-labelledby="location-name">
+        <button
+          id="location-toggle"
+          class="location-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="location-controls"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path>
+            <circle cx="12" cy="10" r="2.5"></circle>
+          </svg>
+          <span id="location-name">MCSE Csillagtanya</span>
+          <span class="location-chevron" aria-hidden="true">⌄</span>
+        </button>
+
+        <div id="location-controls" class="location-controls" hidden>
+          <div class="quick-locations">
+            <button id="default-location-button" type="button"></button>
+            <button id="gps-location-button" type="button"></button>
+          </div>
+          <form id="coordinate-form" class="coordinate-form">
+            <label>
+              <span id="latitude-label">Lat</span>
+              <input id="latitude-input" name="latitude" type="text" inputmode="decimal" autocomplete="off" required />
+            </label>
+            <label>
+              <span id="longitude-label">Lon</span>
+              <input id="longitude-input" name="longitude" type="text" inputmode="decimal" autocomplete="off" required />
+            </label>
+            <button id="coordinate-submit" type="submit" aria-label="OK">→</button>
+          </form>
+        </div>
+      </section>
+
+      <p id="widget-status" class="widget-status" role="status" aria-live="polite"></p>
+
+      <section class="forecast-section" aria-labelledby="forecast-title">
+        <h2 id="forecast-title" class="visually-hidden">Előrejelzés</h2>
+        <ol id="forecast-list" class="forecast-list" aria-busy="true">
+          {Array.from({ length: 6 }, (_, index) => (
+            <li class="forecast-item forecast-placeholder" aria-hidden="true" data-placeholder={index}>
+              <span></span><i></i><b></b>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section class="moon-section" aria-labelledby="moon-title">
+        <svg id="moon-visual" class="moon-visual" viewBox="0 0 100 100" role="img">
+          <circle class="moon-shadow" cx="50" cy="50" r="45"></circle>
+          <path id="moon-lit-path" class="moon-lit"></path>
+          <circle class="moon-outline" cx="50" cy="50" r="45"></circle>
+        </svg>
+        <div class="moon-summary">
+          <h2 id="moon-title">Hold</h2>
+          <p><strong id="moon-phase">—</strong> <span id="moon-illumination">—</span></p>
+        </div>
+        <dl class="moon-events">
+          <div>
+            <dt><span aria-hidden="true">↑</span><span id="moonrise-label" class="visually-hidden">Holdkelte</span></dt>
+            <dd id="moonrise-time">—</dd>
+          </div>
+          <div>
+            <dt><span aria-hidden="true">↓</span><span id="moonset-label" class="visually-hidden">Holdnyugta</span></dt>
+            <dd id="moonset-time">—</dd>
+          </div>
+        </dl>
+      </section>
+
+      <footer class="widget-footer">
+        <small>Open-Meteo</small>
+        <a id="full-site-link" href="/" target="_blank" rel="noopener">AnteAstra <span aria-hidden="true">→</span></a>
+      </footer>
+    </main>
+
+    <script>
+      import { initWidget } from "../scripts/widget.js";
+      initWidget();
+    </script>
+  </body>
+</html>
