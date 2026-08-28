@@ -5,6 +5,7 @@
 - Beágyazható, reszponzív AnteAstra widget a következő 12 óra időjárási piktogramjaival és felhőzetével, valamint a Hold fázisával, megvilágítottságával, kelési és nyugvási idejével.
 - A widget alaphelyszíne az MCSE lovasberényi Csillagtanyája; lehetőség szerint átveszi a böngészőben mentett AnteAstra-helyet, továbbá GPS-szel vagy koordinátákkal is váltható.
 - A widget egyetlen útvonalon, a böngésző nyelve vagy `lang` paraméter alapján ad magyar vagy angol akadálymentes feliratokat, és magasságüzenettel segíti az iframe-beágyazást.
+- A kanonikus HTTPS-átirányítás reverse proxy mögött is felismeri a továbbított protokollt, így nem irányítja önmagára a már biztonságos URL-eket.
 
 ## 0.7.0 – 2026-08-17
 
