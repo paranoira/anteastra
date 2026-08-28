@@ -284,12 +284,11 @@ a { -webkit-tap-highlight-color: transparent; }
   width: 100%;
   min-height: 48px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.18rem;
+  gap: 0.08rem;
 }
-
-.forecast-sky[data-cloudy="true"] { justify-content: space-evenly; }
 
 .celestial-icon {
   width: 32px;
@@ -297,14 +296,17 @@ a { -webkit-tap-highlight-color: transparent; }
   flex: 0 0 auto;
 }
 
-.celestial-sun { stroke: var(--warning); }
 .celestial-stars { fill: var(--accent); filter: drop-shadow(0 0 3px rgba(117, 200, 255, 0.3)); }
 .celestial-moon { overflow: visible; }
+.celestial-moon .moon-crater { fill: #718095; opacity: 0.68; }
 
-.forecast-sky[data-cloudy="true"] .celestial-icon {
-  width: 27px;
-  height: 27px;
-  opacity: 0.72;
+.celestial-caption {
+  color: var(--muted);
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .forecast-cloud-gauge {
@@ -360,8 +362,8 @@ a { -webkit-tap-highlight-color: transparent; }
 .quality-legend [data-state="poor"] b { color: var(--danger); }
 
 .weather-icon {
-  width: 25px;
-  height: 25px;
+  width: 29px;
+  height: 29px;
   fill: none;
   stroke: var(--accent);
   stroke-linecap: round;

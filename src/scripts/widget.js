@@ -18,6 +18,7 @@ const copy = {
     cloudCover: "Felhőzet",
     quality: { good: "Jó", mixed: "Változó", poor: "Gyenge" },
     sky: { day: "nappali ég", night: "éjszakai ég", moon: "Hold a horizont felett", stars: "tiszta éjszakai ég" },
+    skyCaption: { moon: "Hold", stars: "Csillagok" },
     defaultLocation: "Csillagtanya",
     myLocation: "Saját helyzet",
     gpsName: "Saját helyzet",
@@ -45,6 +46,7 @@ const copy = {
     cloudCover: "Cloud cover",
     quality: { good: "Good", mixed: "Variable", poor: "Poor" },
     sky: { day: "daylight", night: "night sky", moon: "Moon above the horizon", stars: "clear night sky" },
+    skyCaption: { moon: "Moon", stars: "Stars" },
     defaultLocation: "Csillagtanya",
     myLocation: "My location",
     gpsName: "My location",
@@ -421,16 +423,20 @@ function renderForecast(hours) {
     const quality = getObservingQuality(hour, condition.icon);
     const sky = getSkyContext(hour.time);
     const hasCloud = (hour.cloudCover ?? 0) > 0;
-    const skyLabel = sky.type === "stars" && hasCloud
-      ? copy[state.locale].sky.night
-      : copy[state.locale].sky[sky.type];
     const cloud = Number.isFinite(hour.cloudCover) ? `${Math.round(hour.cloudCover)}%` : "—";
+    const clearNightContext = !hasCloud && sky.type !== "day" ? copy[state.locale].sky[sky.type] : null;
     const item = document.createElement("li");
     item.className = "forecast-item";
     item.dataset.observingState = quality;
     item.setAttribute(
       "aria-label",
-      `${formatHour(hour.time)}, ${condition.text}, ${cloud} ${copy[state.locale].cloud}, ${skyLabel}, ${copy[state.locale].quality[quality]}`
+      [
+        formatHour(hour.time),
+        condition.text,
+        `${cloud} ${copy[state.locale].cloud}`,
+        clearNightContext,
+        copy[state.locale].quality[quality]
+      ].filter(Boolean).join(", ")
     );
 
     const time = document.createElement("time");
@@ -442,13 +448,12 @@ function renderForecast(hours) {
     qualityBadge.dataset.state = quality;
     qualityBadge.textContent = quality === "good" ? "✓" : quality === "poor" ? "!" : "~";
     qualityBadge.setAttribute("aria-hidden", "true");
+    const weatherIcon = createWeatherIcon(condition.icon);
     const skyDisplay = document.createElement("span");
     skyDisplay.className = "forecast-sky";
-    skyDisplay.dataset.sky = sky.type;
-    if (!hasCloud || sky.type !== "stars") skyDisplay.append(createCelestialIcon(sky));
 
-    // Zero cloud means no cloud marker at all. Otherwise the larger marker
-    // travels along a visible vertical scale while the Sun/Moon/stars remain.
+    // Weather keeps its own permanent icon. This secondary slot shows either
+    // cloud cover, or a night-sky context only when cloud cover is exactly zero.
     if (hasCloud) {
       skyDisplay.dataset.cloudy = "true";
       const cloudGauge = document.createElement("span");
@@ -462,11 +467,18 @@ function renderForecast(hours) {
       cloudMarker.style.bottom = `${(clamp(hour.cloudCover, 0, 100) / 100) * 24}px`;
       cloudGauge.append(cloudMarker);
       skyDisplay.append(cloudGauge);
+    } else if (sky.type !== "day") {
+      skyDisplay.dataset.sky = sky.type;
+      skyDisplay.append(createCelestialIcon(sky));
+      const caption = document.createElement("span");
+      caption.className = "celestial-caption";
+      caption.textContent = copy[state.locale].skyCaption[sky.type];
+      skyDisplay.append(caption);
     }
     const cloudValue = document.createElement("span");
     cloudValue.className = "forecast-cloud";
     cloudValue.textContent = cloud;
-    item.append(qualityBadge, time, skyDisplay, cloudValue);
+    item.append(qualityBadge, time, weatherIcon, skyDisplay, cloudValue);
     return item;
   });
   ui.forecastList.replaceChildren(...items);
@@ -511,7 +523,12 @@ function createCelestialIcon(sky) {
       transform: `rotate(${sky.rotation.toFixed(2)} 50 50)`
     });
     const outline = createSvgElement("circle", { class: "moon-outline", cx: "50", cy: "50", r: "45" });
-    svg.append(shadow, lit, outline);
+    const craters = [
+      createSvgElement("circle", { class: "moon-crater", cx: "35", cy: "35", r: "8" }),
+      createSvgElement("circle", { class: "moon-crater", cx: "65", cy: "55", r: "6" }),
+      createSvgElement("circle", { class: "moon-crater", cx: "42", cy: "72", r: "4" })
+    ];
+    svg.append(shadow, lit, ...craters, outline);
     return svg;
   }
 

@@ -9,6 +9,7 @@
 - A widget előrejelzése felhőzet-oszlopdiagramot, egyértelmű jelmagyarázatot és a főoldalhoz igazodó, színnel és jellel is közölt óránkénti észlelési minősítést kapott; a főoldali link szövege „Részletes előrejelzés” lett.
 - A widget függőleges felhőzetjelzőjén kitöltött oszlop helyett a százalékos magasságban mozgó felhőpiktogram mutatja az égbolt fedettségét, hogy ne legyen összetéveszthető a csapadékmennyiséggel.
 - A widget óránkénti égállapot-jelzője nappal a Napot, tiszta éjszakán csillagokat, a horizont feletti Hold esetén annak fázisát mutatja; 0%-os felhőzetnél nincs felhőikon, felhős időben pedig nagyobb piktogram mozog a függőleges skálán. A hat időpont minden widgetméreten olvashatóbb 3×2-es rácsot használ.
+- Az óránkénti időjáráspiktogram ismét minden időpontnál állandó helyen látható. A Hold vagy a csillagok külön jelzésként, csak 0%-os felhőzetnél jelennek meg; a Hold kráteres rajzot és feliratot kapott, hogy teliholdkor se legyen összetéveszthető a Nappal.
 
 ## 0.7.0 – 2026-08-17
 
