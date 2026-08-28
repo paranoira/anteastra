@@ -432,16 +432,17 @@ function renderForecast(hours) {
     qualityBadge.dataset.state = quality;
     qualityBadge.textContent = quality === "good" ? "✓" : quality === "poor" ? "!" : "~";
     qualityBadge.setAttribute("aria-hidden", "true");
-    const cloudBar = document.createElement("span");
-    cloudBar.className = "forecast-cloud-bar";
-    cloudBar.setAttribute("aria-hidden", "true");
-    const cloudFill = document.createElement("span");
-    cloudFill.style.height = `${clamp(hour.cloudCover ?? 0, 0, 100)}%`;
-    cloudBar.append(cloudFill);
+    const cloudGauge = document.createElement("span");
+    cloudGauge.className = "forecast-cloud-gauge";
+    cloudGauge.setAttribute("aria-hidden", "true");
+    const cloudMarker = createCloudMarker();
+    // The 30 px gauge contains a 12 px marker, leaving 18 px of travel.
+    cloudMarker.style.bottom = `${(clamp(hour.cloudCover ?? 0, 0, 100) / 100) * 18}px`;
+    cloudGauge.append(cloudMarker);
     const cloudValue = document.createElement("span");
     cloudValue.className = "forecast-cloud";
     cloudValue.textContent = cloud;
-    item.append(qualityBadge, time, icon, cloudBar, cloudValue);
+    item.append(qualityBadge, time, icon, cloudGauge, cloudValue);
     return item;
   });
   ui.forecastList.replaceChildren(...items);
@@ -539,6 +540,16 @@ function createWeatherIcon(key) {
     for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
     svg.append(element);
   }
+  return svg;
+}
+
+function createCloudMarker() {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.classList.add("cloud-gauge-marker");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  const path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("d", "M6.5 18h11a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.84 8.6 4.7 4.7 0 0 0 6.5 18Z");
+  svg.append(path);
   return svg;
 }
 

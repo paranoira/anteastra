@@ -62,7 +62,7 @@ between the two supported languages from the visitor's browser language.
 ## Data and future extension
 
 The first version shows the local date, six two-hour samples from the next
-twelve hours with weather pictograms, cloud-cover bars and an observing-quality
+twelve hours with weather pictograms, vertical cloud-cover gauges and an observing-quality
 rating, plus Moon phase, illumination, rise and set. The rating uses cloud,
 precipitation, wind and dew-related forecast inputs and is communicated by both
 colour and a symbol. Weather and time-zone data come from Open-Meteo; Moon data

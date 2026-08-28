@@ -280,24 +280,29 @@ a { -webkit-tap-highlight-color: transparent; }
 .quality-badge[data-state="mixed"] { color: var(--warning); }
 .quality-badge[data-state="poor"] { color: var(--danger); }
 
-.forecast-cloud-bar {
+.forecast-cloud-gauge {
   position: relative;
-  width: 9px;
-  height: 28px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--bg);
+  width: 22px;
+  height: 30px;
+  background:
+    linear-gradient(var(--border), var(--border)) center / 2px 100% no-repeat,
+    repeating-linear-gradient(to bottom, transparent 0 6px, rgba(156, 171, 188, 0.22) 6px 7px);
 }
 
-.forecast-cloud-bar > span {
+.cloud-gauge-marker {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  min-height: 1px;
-  border-radius: inherit;
-  background: var(--accent);
+  left: 50%;
+  width: 18px;
+  height: 12px;
+  padding: 1px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  fill: var(--surface-raised);
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.3;
+  transform: translateX(-50%);
 }
 
 .quality-legend {

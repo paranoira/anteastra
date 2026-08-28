@@ -7,6 +7,7 @@
 - A widget egyetlen útvonalon, a böngésző nyelve vagy `lang` paraméter alapján ad magyar vagy angol akadálymentes feliratokat, és magasságüzenettel segíti az iframe-beágyazást.
 - A kanonikus HTTPS-átirányítás reverse proxy mögött is felismeri a továbbított protokollt, így nem irányítja önmagára a már biztonságos URL-eket.
 - A widget előrejelzése felhőzet-oszlopdiagramot, egyértelmű jelmagyarázatot és a főoldalhoz igazodó, színnel és jellel is közölt óránkénti észlelési minősítést kapott; a főoldali link szövege „Részletes előrejelzés” lett.
+- A widget függőleges felhőzetjelzőjén kitöltött oszlop helyett a százalékos magasságban mozgó felhőpiktogram mutatja az égbolt fedettségét, hogy ne legyen összetéveszthető a csapadékmennyiséggel.
 
 ## 0.7.0 – 2026-08-17
 
