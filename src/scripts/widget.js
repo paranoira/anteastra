@@ -1,5 +1,6 @@
 import { runtime } from "../i18n/translations.js";
 import { calculateNightSky, createMoonIlluminationPath } from "./astronomy.js";
+import * as SunCalc from "suncalc";
 
 const STORAGE_KEY = "timee.location.v1";
 const DEFAULT_LOCATION = Object.freeze({
@@ -16,6 +17,7 @@ const copy = {
     forecast: "12 órás előrejelzés",
     cloudCover: "Felhőzet",
     quality: { good: "Jó", mixed: "Változó", poor: "Gyenge" },
+    sky: { day: "nappali ég", night: "éjszakai ég", moon: "Hold a horizont felett", stars: "tiszta éjszakai ég" },
     defaultLocation: "Csillagtanya",
     myLocation: "Saját helyzet",
     gpsName: "Saját helyzet",
@@ -42,6 +44,7 @@ const copy = {
     forecast: "12-hour forecast",
     cloudCover: "Cloud cover",
     quality: { good: "Good", mixed: "Variable", poor: "Poor" },
+    sky: { day: "daylight", night: "night sky", moon: "Moon above the horizon", stars: "clear night sky" },
     defaultLocation: "Csillagtanya",
     myLocation: "My location",
     gpsName: "My location",
@@ -317,6 +320,7 @@ async function fetchSnapshot(location, signal) {
       "wind_speed_10m", "wind_gusts_10m"
     ].join(","),
     timezone: "auto",
+    timeformat: "unixtime",
     forecast_days: "2",
     temperature_unit: "celsius",
     wind_speed_unit: "kmh",
@@ -332,13 +336,15 @@ async function fetchSnapshot(location, signal) {
   if (!data.timezone) throw new Error("Missing time zone");
 
   const times = Array.isArray(data.hourly?.time) ? data.hourly.time : [];
-  const currentHour = `${String(data.current?.time || "").slice(0, 13)}:00`;
-  let startIndex = times.findIndex((time) => time >= currentHour);
+  const currentTime = Number(data.current?.time);
+  let startIndex = Number.isFinite(currentTime)
+    ? times.findIndex((time) => Number(time) >= currentTime)
+    : 0;
   if (startIndex < 0) startIndex = 0;
   const hours = times.slice(startIndex, startIndex + 12).map((time, localIndex) => {
     const index = startIndex + localIndex;
     return {
-      time,
+      time: new Date(Number(time) * 1000),
       temperature: numberOrNull(data.hourly?.temperature_2m?.[index]),
       humidity: numberOrNull(data.hourly?.relative_humidity_2m?.[index]),
       dewPoint: numberOrNull(data.hourly?.dew_point_2m?.[index]),
@@ -413,40 +419,112 @@ function renderForecast(hours) {
   const items = sampledHours.map((hour) => {
     const condition = getWeatherCondition(hour.weatherCode);
     const quality = getObservingQuality(hour, condition.icon);
+    const sky = getSkyContext(hour.time);
+    const hasCloud = (hour.cloudCover ?? 0) > 0;
+    const skyLabel = sky.type === "stars" && hasCloud
+      ? copy[state.locale].sky.night
+      : copy[state.locale].sky[sky.type];
     const cloud = Number.isFinite(hour.cloudCover) ? `${Math.round(hour.cloudCover)}%` : "—";
     const item = document.createElement("li");
     item.className = "forecast-item";
     item.dataset.observingState = quality;
     item.setAttribute(
       "aria-label",
-      `${formatHour(hour.time)}, ${condition.text}, ${cloud} ${copy[state.locale].cloud}, ${copy[state.locale].quality[quality]}`
+      `${formatHour(hour.time)}, ${condition.text}, ${cloud} ${copy[state.locale].cloud}, ${skyLabel}, ${copy[state.locale].quality[quality]}`
     );
 
     const time = document.createElement("time");
     time.className = "forecast-time";
-    time.dateTime = hour.time;
+    time.dateTime = hour.time.toISOString();
     time.textContent = formatHour(hour.time);
-    const icon = createWeatherIcon(condition.icon);
     const qualityBadge = document.createElement("span");
     qualityBadge.className = "quality-badge";
     qualityBadge.dataset.state = quality;
     qualityBadge.textContent = quality === "good" ? "✓" : quality === "poor" ? "!" : "~";
     qualityBadge.setAttribute("aria-hidden", "true");
-    const cloudGauge = document.createElement("span");
-    cloudGauge.className = "forecast-cloud-gauge";
-    cloudGauge.setAttribute("aria-hidden", "true");
-    const cloudMarker = createCloudMarker();
-    // The 30 px gauge contains a 12 px marker, leaving 18 px of travel.
-    cloudMarker.style.bottom = `${(clamp(hour.cloudCover ?? 0, 0, 100) / 100) * 18}px`;
-    cloudGauge.append(cloudMarker);
+    const skyDisplay = document.createElement("span");
+    skyDisplay.className = "forecast-sky";
+    skyDisplay.dataset.sky = sky.type;
+    if (!hasCloud || sky.type !== "stars") skyDisplay.append(createCelestialIcon(sky));
+
+    // Zero cloud means no cloud marker at all. Otherwise the larger marker
+    // travels along a visible vertical scale while the Sun/Moon/stars remain.
+    if (hasCloud) {
+      skyDisplay.dataset.cloudy = "true";
+      const cloudGauge = document.createElement("span");
+      cloudGauge.className = "forecast-cloud-gauge";
+      cloudGauge.setAttribute("aria-hidden", "true");
+      const markerKey = ["fog", "drizzle", "rain", "snow", "thunderstorm"].includes(condition.icon)
+        ? condition.icon
+        : "cloud";
+      const cloudMarker = createCloudMarker(markerKey);
+      // The 44 px gauge contains a 20 px marker, leaving 24 px of travel.
+      cloudMarker.style.bottom = `${(clamp(hour.cloudCover, 0, 100) / 100) * 24}px`;
+      cloudGauge.append(cloudMarker);
+      skyDisplay.append(cloudGauge);
+    }
     const cloudValue = document.createElement("span");
     cloudValue.className = "forecast-cloud";
     cloudValue.textContent = cloud;
-    item.append(qualityBadge, time, icon, cloudGauge, cloudValue);
+    item.append(qualityBadge, time, skyDisplay, cloudValue);
     return item;
   });
   ui.forecastList.replaceChildren(...items);
   ui.forecastList.setAttribute("aria-busy", "false");
+}
+
+function getSkyContext(date) {
+  const sun = SunCalc.getPosition(date, state.location.latitude, state.location.longitude);
+  // Civil twilight still reads as daylight in this compact two-state display;
+  // stars appear once the Sun is more than six degrees below the horizon.
+  if (sun.altitude >= -6) return { type: "day" };
+
+  const moonPosition = SunCalc.getMoonPosition(date, state.location.latitude, state.location.longitude);
+  if (moonPosition.altitude >= 0) {
+    const illumination = SunCalc.getMoonIllumination(date);
+    return {
+      type: "moon",
+      fraction: illumination.fraction,
+      waxing: illumination.waxing,
+      rotation: illumination.angle - moonPosition.parallacticAngle
+    };
+  }
+  return { type: "stars" };
+}
+
+function createCelestialIcon(sky) {
+  if (sky.type === "day") {
+    const sun = createWeatherIcon("clear");
+    sun.classList.add("celestial-icon", "celestial-sun");
+    return sun;
+  }
+
+  if (sky.type === "moon") {
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.classList.add("celestial-icon", "celestial-moon");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.setAttribute("aria-hidden", "true");
+    const shadow = createSvgElement("circle", { class: "moon-shadow", cx: "50", cy: "50", r: "45" });
+    const lit = createSvgElement("path", {
+      class: "moon-lit",
+      d: createMoonIlluminationPath(sky.fraction, sky.waxing, 24),
+      transform: `rotate(${sky.rotation.toFixed(2)} 50 50)`
+    });
+    const outline = createSvgElement("circle", { class: "moon-outline", cx: "50", cy: "50", r: "45" });
+    svg.append(shadow, lit, outline);
+    return svg;
+  }
+
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.classList.add("celestial-icon", "celestial-stars");
+  svg.setAttribute("viewBox", "0 0 32 32");
+  svg.setAttribute("aria-hidden", "true");
+  svg.append(
+    createSvgElement("path", { d: "m10 3 1.5 4.5L16 9l-4.5 1.5L10 15l-1.5-4.5L4 9l4.5-1.5Z" }),
+    createSvgElement("path", { d: "m22 12 1.2 3.8L27 17l-3.8 1.2L22 22l-1.2-3.8L17 17l3.8-1.2Z" }),
+    createSvgElement("path", { d: "m11 20 .9 2.6 2.6.9-2.6.9L11 27l-.9-2.6-2.6-.9 2.6-.9Z" })
+  );
+  return svg;
 }
 
 function getObservingQuality(hour, condition) {
@@ -543,18 +621,30 @@ function createWeatherIcon(key) {
   return svg;
 }
 
-function createCloudMarker() {
+function createCloudMarker(key) {
   const svg = document.createElementNS(SVG_NS, "svg");
   svg.classList.add("cloud-gauge-marker");
   svg.setAttribute("viewBox", "0 0 24 24");
-  const path = document.createElementNS(SVG_NS, "path");
-  path.setAttribute("d", "M6.5 18h11a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.84 8.6 4.7 4.7 0 0 0 6.5 18Z");
-  svg.append(path);
+  for (const [tag, attributes] of weatherIconParts[key] || weatherIconParts.cloud) {
+    svg.append(createSvgElement(tag, attributes));
+  }
   return svg;
 }
 
-function formatHour(localIso) {
-  return localIso?.slice(11, 16) || "—";
+function createSvgElement(tag, attributes) {
+  const element = document.createElementNS(SVG_NS, tag);
+  for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
+  return element;
+}
+
+function formatHour(date) {
+  if (!(date instanceof Date) || !Number.isFinite(date.getTime()) || !state.timeZone) return "—";
+  return new Intl.DateTimeFormat(runtime[state.locale].dateLocale, {
+    timeZone: state.timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).format(date);
 }
 
 function formatEventTime(date) {

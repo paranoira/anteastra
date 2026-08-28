@@ -216,8 +216,8 @@ a { -webkit-tap-highlight-color: transparent; }
 
 .forecast-list {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.22rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.32rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -280,28 +280,56 @@ a { -webkit-tap-highlight-color: transparent; }
 .quality-badge[data-state="mixed"] { color: var(--warning); }
 .quality-badge[data-state="poor"] { color: var(--danger); }
 
+.forecast-sky {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18rem;
+}
+
+.forecast-sky[data-cloudy="true"] { justify-content: space-evenly; }
+
+.celestial-icon {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+}
+
+.celestial-sun { stroke: var(--warning); }
+.celestial-stars { fill: var(--accent); filter: drop-shadow(0 0 3px rgba(117, 200, 255, 0.3)); }
+.celestial-moon { overflow: visible; }
+
+.forecast-sky[data-cloudy="true"] .celestial-icon {
+  width: 27px;
+  height: 27px;
+  opacity: 0.72;
+}
+
 .forecast-cloud-gauge {
   position: relative;
-  width: 22px;
-  height: 30px;
+  width: 32px;
+  height: 44px;
+  flex: 0 0 auto;
   background:
-    linear-gradient(var(--border), var(--border)) center / 2px 100% no-repeat,
-    repeating-linear-gradient(to bottom, transparent 0 6px, rgba(156, 171, 188, 0.22) 6px 7px);
+    linear-gradient(var(--muted), var(--muted)) center / 3px 100% no-repeat,
+    repeating-linear-gradient(to bottom, transparent 0 8px, rgba(156, 171, 188, 0.34) 8px 9px);
 }
 
 .cloud-gauge-marker {
   position: absolute;
   left: 50%;
-  width: 18px;
-  height: 12px;
-  padding: 1px;
+  width: 30px;
+  height: 20px;
+  padding: 2px;
   border-radius: 999px;
   background: var(--surface-raised);
   fill: var(--surface-raised);
   stroke: var(--accent);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 2.3;
+  stroke-width: 2.1;
   transform: translateX(-50%);
 }
 
@@ -407,7 +435,6 @@ a { -webkit-tap-highlight-color: transparent; }
 }
 
 @media (max-width: 285px) {
-  .forecast-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .quick-locations { grid-template-columns: 1fr; }
   .moon-events { display: none; }
 }

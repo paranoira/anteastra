@@ -8,6 +8,7 @@
 - A kanonikus HTTPS-átirányítás reverse proxy mögött is felismeri a továbbított protokollt, így nem irányítja önmagára a már biztonságos URL-eket.
 - A widget előrejelzése felhőzet-oszlopdiagramot, egyértelmű jelmagyarázatot és a főoldalhoz igazodó, színnel és jellel is közölt óránkénti észlelési minősítést kapott; a főoldali link szövege „Részletes előrejelzés” lett.
 - A widget függőleges felhőzetjelzőjén kitöltött oszlop helyett a százalékos magasságban mozgó felhőpiktogram mutatja az égbolt fedettségét, hogy ne legyen összetéveszthető a csapadékmennyiséggel.
+- A widget óránkénti égállapot-jelzője nappal a Napot, tiszta éjszakán csillagokat, a horizont feletti Hold esetén annak fázisát mutatja; 0%-os felhőzetnél nincs felhőikon, felhős időben pedig nagyobb piktogram mozog a függőleges skálán. A hat időpont minden widgetméreten olvashatóbb 3×2-es rácsot használ.
 
 ## 0.7.0 – 2026-08-17
 
