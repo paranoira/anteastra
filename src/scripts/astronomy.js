@@ -121,7 +121,8 @@ function moonVisibility(events, altitude) {
  *
  * Evening `night` and following-morning `nightEnd` come from two local calendar
  * days. Moon data is sampled at mid-darkness, or local midnight when no complete
- * darkness exists. Rise/set uses sunset-to-sunrise with an 18:00–06:00 fallback.
+ * darkness exists. Displayed rise/set uses local noon-to-noon so events just
+ * outside sunset or sunrise stay paired with the relevant observing night.
  * Returned states explicitly distinguish darkness, polar day, Sun-always-below
  * and ordinary no-darkness cases. Terrain and local horizon are not modeled.
  */
@@ -159,7 +160,18 @@ export function calculateNightSky({ date = new Date(), latitude, longitude, elev
 
   const illumination = SunCalc.getMoonIllumination(sampleTime);
   const position = SunCalc.getMoonPosition(sampleTime, latitude, longitude);
-  const moonEvents = collectMoonEvents(observingWindowStart, safeWindowEnd, latitude, longitude);
+  // A near-full Moon can rise just before sunset or set just after sunrise.
+  // Use a full local noon-to-noon cycle for the displayed event pair while
+  // keeping the visibility summary scoped to the actual observing window.
+  const moonHorizonStart = zonedDate(observingDate, 12, 0, timeZone);
+  const moonHorizonEnd = zonedDate(followingDate, 12, 0, timeZone);
+  const moonEvents = collectMoonEvents(moonHorizonStart, moonHorizonEnd, latitude, longitude);
+  const observingMoonEvents = collectMoonEvents(observingWindowStart, safeWindowEnd, latitude, longitude);
+  const horizonStartsAbove = SunCalc.getMoonPosition(
+    new Date(moonHorizonStart.getTime() + 60000),
+    latitude,
+    longitude
+  ).altitude >= 0;
   const durationMinutes = hasDarkness
     ? Math.max(0, Math.round((darknessEnd - darknessStart) / 60000))
     : 0;
@@ -196,7 +208,10 @@ export function calculateNightSky({ date = new Date(), latitude, longitude, elev
       sampleTime,
       rise: moonEvents.rise,
       set: moonEvents.set,
-      visibility: moonVisibility(moonEvents, position.altitude)
+      visibility: moonVisibility(observingMoonEvents, position.altitude),
+      horizonStart: moonHorizonStart,
+      horizonEnd: moonHorizonEnd,
+      horizonStartsAbove
     }
   };
 }

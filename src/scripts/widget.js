@@ -36,6 +36,7 @@ const copy = {
     moon: "Hold",
     moonrise: "Holdkelte",
     moonset: "Holdnyugta",
+    moonDial: "A Hold horizont feletti időszaka 24 órás számlapon",
     noEvent: "—",
     fullSite: "Részletes előrejelzés",
     updated: "Frissítve",
@@ -64,6 +65,7 @@ const copy = {
     moon: "Moon",
     moonrise: "Moonrise",
     moonset: "Moonset",
+    moonDial: "Moon-above-horizon period on a 24-hour dial",
     noEvent: "—",
     fullSite: "Detailed forecast",
     updated: "Updated",
@@ -139,7 +141,8 @@ function mapUi() {
     "forecast-title", "forecast-list", "cloud-key-label", "quality-good-label",
     "quality-mixed-label", "quality-poor-label", "moon-visual", "moon-lit-path", "moon-title",
     "moon-phase", "moon-illumination", "moonrise-label", "moonset-label", "moonrise-time",
-    "moonset-time", "full-site-link"
+    "moonset-time", "moon-horizon-dial", "moon-above-circle", "moon-above-arc",
+    "moonrise-marker", "moonset-marker", "full-site-link"
   ].forEach((id) => {
     ui[toCamel(id)] = document.getElementById(id);
   });
@@ -395,6 +398,7 @@ function renderLoading() {
   ui.moonriseTime.textContent = "—";
   ui.moonsetTime.textContent = "—";
   ui.moonLitPath.setAttribute("d", "");
+  clearMoonDial();
 }
 
 function createForecastPlaceholder() {
@@ -414,6 +418,7 @@ function renderUnavailable() {
   ui.moonriseTime.textContent = "—";
   ui.moonsetTime.textContent = "—";
   ui.moonLitPath.setAttribute("d", "");
+  clearMoonDial();
 }
 
 function renderForecast(hours) {
@@ -607,9 +612,78 @@ function renderMoon(elevation) {
   ui.moonIllumination.textContent = `${illumination}%`;
   ui.moonriseTime.textContent = formatEventTime(moon.rise);
   ui.moonsetTime.textContent = formatEventTime(moon.set);
+  renderMoonDial(moon);
   ui.moonLitPath.setAttribute("d", createMoonIlluminationPath(moon.fraction, moon.waxing, 36));
   ui.moonLitPath.setAttribute("transform", `rotate(${moon.rotation.toFixed(2)} 50 50)`);
   ui.moonVisual.setAttribute("aria-label", runtime[state.locale].astronomy.moonAria(phaseName, illumination));
+}
+
+function clearMoonDial() {
+  ui.moonAboveArc?.setAttribute("d", "");
+  if (ui.moonAboveCircle) ui.moonAboveCircle.hidden = true;
+  if (ui.moonriseMarker) ui.moonriseMarker.hidden = true;
+  if (ui.moonsetMarker) ui.moonsetMarker.hidden = true;
+  ui.moonHorizonDial?.removeAttribute("aria-label");
+}
+
+function renderMoonDial(moon) {
+  clearMoonDial();
+  const riseMinutes = getLocalClockMinutes(moon.rise);
+  const setMinutes = getLocalClockMinutes(moon.set);
+  const startMinutes = getLocalClockMinutes(moon.horizonStart);
+  const endMinutes = getLocalClockMinutes(moon.horizonEnd);
+
+  if (Number.isFinite(riseMinutes) && Number.isFinite(setMinutes)) {
+    ui.moonAboveArc.setAttribute("d", describeClockArc(riseMinutes, setMinutes));
+  } else if (!moon.rise && !moon.set && moon.horizonStartsAbove) {
+    ui.moonAboveCircle.hidden = false;
+  } else if (Number.isFinite(riseMinutes) && Number.isFinite(endMinutes)) {
+    ui.moonAboveArc.setAttribute("d", describeClockArc(riseMinutes, endMinutes));
+  } else if (Number.isFinite(startMinutes) && Number.isFinite(setMinutes)) {
+    ui.moonAboveArc.setAttribute("d", describeClockArc(startMinutes, setMinutes));
+  }
+
+  positionDialMarker(ui.moonriseMarker, riseMinutes);
+  positionDialMarker(ui.moonsetMarker, setMinutes);
+  ui.moonHorizonDial.setAttribute(
+    "aria-label",
+    `${copy[state.locale].moonDial}. ${copy[state.locale].moonrise}: ${formatEventTime(moon.rise)}. ${copy[state.locale].moonset}: ${formatEventTime(moon.set)}.`
+  );
+}
+
+function getLocalClockMinutes(date) {
+  if (!(date instanceof Date) || !Number.isFinite(date.getTime()) || !state.timeZone) return null;
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: state.timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const hour = Number(values.hour);
+  const minute = Number(values.minute);
+  return Number.isFinite(hour) && Number.isFinite(minute) ? hour * 60 + minute : null;
+}
+
+function describeClockArc(startMinutes, endMinutes) {
+  const duration = (endMinutes - startMinutes + 1440) % 1440;
+  if (duration < 0.5) return "";
+  const start = clockPoint(startMinutes);
+  const end = clockPoint(endMinutes);
+  return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A 36 36 0 ${duration > 720 ? 1 : 0} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
+}
+
+function positionDialMarker(marker, minutes) {
+  if (!marker || !Number.isFinite(minutes)) return;
+  const point = clockPoint(minutes);
+  marker.setAttribute("cx", point.x.toFixed(2));
+  marker.setAttribute("cy", point.y.toFixed(2));
+  marker.hidden = false;
+}
+
+function clockPoint(minutes) {
+  const angle = (minutes / 1440) * Math.PI * 2 - Math.PI / 2;
+  return { x: 60 + 36 * Math.cos(angle), y: 60 + 36 * Math.sin(angle) };
 }
 
 function getWeatherCondition(code) {
