@@ -14,7 +14,7 @@ const DEFAULT_LOCATION = Object.freeze({
 
 const copy = {
   hu: {
-    forecast: "12 órás előrejelzés",
+    forecast: "6 órás előrejelzés",
     cloudCover: "Felhőzet",
     quality: { good: "Jó", mixed: "Változó", poor: "Gyenge" },
     sky: { day: "nappali ég", night: "éjszakai ég", moon: "Hold a horizont felett", stars: "tiszta éjszakai ég" },
@@ -45,7 +45,7 @@ const copy = {
     cloud: "felhő"
   },
   en: {
-    forecast: "12-hour forecast",
+    forecast: "6-hour forecast",
     cloudCover: "Cloud cover",
     quality: { good: "Good", mixed: "Variable", poor: "Poor" },
     sky: { day: "daylight", night: "night sky", moon: "Moon above the horizon", stars: "clear night sky" },
@@ -399,7 +399,7 @@ function renderDate() {
 function renderLoading() {
   ui.widgetDate.textContent = "—";
   ui.forecastList.setAttribute("aria-busy", "true");
-  ui.forecastList.replaceChildren(...Array.from({ length: 12 }, createForecastPlaceholder));
+  ui.forecastList.replaceChildren(...Array.from({ length: 6 }, createForecastPlaceholder));
   ui.moonPhase.textContent = "—";
   ui.moonIllumination.textContent = "—";
   ui.sunriseTime.textContent = "—";
@@ -433,7 +433,7 @@ function renderUnavailable() {
 }
 
 function renderForecast(hours) {
-  const sampledHours = hours.slice(0, 12);
+  const sampledHours = hours.slice(0, 6);
   const items = sampledHours.map((hour) => {
     const condition = getWeatherCondition(hour.weatherCode);
     const quality = getObservingQuality(hour, condition.icon);
