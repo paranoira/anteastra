@@ -69,7 +69,7 @@ import "../styles/widget.css";
           </span>
         </div>
         <ol id="forecast-list" class="forecast-list" aria-busy="true">
-          {Array.from({ length: 6 }, (_, index) => (
+          {Array.from({ length: 12 }, (_, index) => (
             <li class="forecast-item forecast-placeholder" aria-hidden="true" data-placeholder={index}>
               <span></span><i></i><b></b>
             </li>
@@ -82,35 +82,46 @@ import "../styles/widget.css";
         </div>
       </section>
 
-      <section class="moon-section" aria-labelledby="moon-title">
-        <svg id="moon-visual" class="moon-visual" viewBox="0 0 100 100" role="img">
-          <circle class="moon-shadow" cx="50" cy="50" r="45"></circle>
-          <path id="moon-lit-path" class="moon-lit"></path>
-          <circle class="moon-outline" cx="50" cy="50" r="45"></circle>
-        </svg>
-        <svg id="moon-horizon-dial" class="moon-horizon-dial" viewBox="0 0 120 120" role="img">
-          <circle class="moon-dial-track" cx="60" cy="60" r="36"></circle>
-          <circle id="moon-above-circle" class="moon-dial-above" cx="60" cy="60" r="36" hidden></circle>
-          <path id="moon-above-arc" class="moon-dial-above" d=""></path>
-          <circle id="moonrise-marker" class="moon-dial-marker moonrise-marker" cx="60" cy="24" r="4" hidden></circle>
-          <circle id="moonset-marker" class="moon-dial-marker moonset-marker" cx="60" cy="24" r="4" hidden></circle>
-          <text x="60" y="13" text-anchor="middle">00</text>
-          <text x="107" y="63" text-anchor="middle">06</text>
-          <text x="60" y="116" text-anchor="middle">12</text>
-          <text x="13" y="63" text-anchor="middle">18</text>
-          <circle class="moon-dial-center" cx="60" cy="60" r="2"></circle>
-        </svg>
+      <section class="celestial-section" aria-labelledby="moon-title">
         <div class="moon-summary">
           <h2 id="moon-title">Hold</h2>
           <p><strong id="moon-phase">—</strong> <span id="moon-illumination">—</span></p>
         </div>
-        <dl class="moon-events">
+
+        <svg id="celestial-chart" class="celestial-chart" viewBox="0 0 300 158" role="img">
+          <rect id="current-time-band" class="current-time-band" x="16" y="12" width="10" height="116" hidden></rect>
+          <line class="celestial-horizon" x1="18" y1="70" x2="282" y2="70"></line>
+          <g id="celestial-time-scale" class="celestial-time-scale" aria-hidden="true"></g>
+          <path id="sun-track" class="celestial-track sun-track" d=""></path>
+          <path id="moon-track" class="celestial-track moon-track" d=""></path>
+          <g id="celestial-event-markers" aria-hidden="true"></g>
+          <g id="sun-current-marker" class="sun-current-marker" aria-hidden="true">
+            <circle cx="0" cy="0" r="6"></circle>
+            <circle class="sun-current-halo" cx="0" cy="0" r="9"></circle>
+          </g>
+          <g id="moon-visual" class="chart-moon-marker" role="img">
+            <circle class="moon-shadow" cx="50" cy="50" r="45"></circle>
+            <path id="moon-lit-path" class="moon-lit"></path>
+            <circle class="moon-outline" cx="50" cy="50" r="45"></circle>
+          </g>
+          <text id="current-time-label" class="current-time-label" x="21" y="9" text-anchor="middle" hidden></text>
+        </svg>
+
+        <dl class="celestial-events">
+          <div class="sun-event">
+            <dt><span aria-hidden="true">☀↑</span><span id="sunrise-label" class="visually-hidden">Napkelte</span></dt>
+            <dd id="sunrise-time">—</dd>
+          </div>
+          <div class="sun-event">
+            <dt><span aria-hidden="true">☀↓</span><span id="sunset-label" class="visually-hidden">Napnyugta</span></dt>
+            <dd id="sunset-time">—</dd>
+          </div>
           <div>
-            <dt><span aria-hidden="true">↑</span><span id="moonrise-label" class="visually-hidden">Holdkelte</span></dt>
+            <dt><span aria-hidden="true">☾↑</span><span id="moonrise-label" class="visually-hidden">Holdkelte</span></dt>
             <dd id="moonrise-time">—</dd>
           </div>
           <div>
-            <dt><span aria-hidden="true">↓</span><span id="moonset-label" class="visually-hidden">Holdnyugta</span></dt>
+            <dt><span aria-hidden="true">☾↓</span><span id="moonset-label" class="visually-hidden">Holdnyugta</span></dt>
             <dd id="moonset-time">—</dd>
           </div>
         </dl>

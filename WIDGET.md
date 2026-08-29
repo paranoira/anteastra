@@ -6,9 +6,9 @@ The compact widget is available at:
 https://anteastra.space/widget/
 ```
 
-It is designed for a roughly 250–360 px wide sidebar. The six forecast points
-use a legible 3×2 layout throughout that range and the widget is about 590 px
-high. It grows while the location controls are open. The widget sends its
+It is designed for a roughly 250–360 px wide sidebar. The twelve hourly forecast
+points use a legible 3×4 layout throughout that range and the widget is about
+960–1020 px high. It grows while the location controls are open. The widget sends its
 current content height to the parent page with an
 `anteastra:widget-height` `postMessage` event.
 
@@ -20,7 +20,7 @@ current content height to the parent page with an
   title="AnteAstra észlelési előrejelzés"
   src="https://anteastra.space/widget/?lang=hu"
   width="100%"
-  height="620"
+  height="1040"
   loading="lazy"
   allow="geolocation"
   style="display:block;max-width:360px;border:0"
@@ -61,14 +61,13 @@ between the two supported languages from the visitor's browser language.
 
 ## Data and future extension
 
-The first version shows the local date, six two-hour samples from the next
+The first version shows the local date and twelve hourly samples from the next
 twelve hours with persistent weather pictograms, optional vertical cloud-cover
 gauges and an observing-quality rating. At 0% cloud cover, clear nights also
 show stars or the above-horizon Moon; crater marks and a caption distinguish the
-Moon from the Sun. The widget also includes Moon phase, illumination, rise and
-set, plus a 24-hour horizon dial. Rise and set are paired across local noon to
-the following noon, keeping events immediately outside sunset and sunrise
-visible. The rating uses cloud,
+Moon from the Sun. A full-width 24-hour chart shows the Sun and Moon altitude
+tracks, the Moon phase on its track, hourly ticks, the current-time band, and
+sunrise, sunset, moonrise and moonset markers with exact times. The rating uses cloud,
 precipitation, wind and dew-related forecast inputs and is communicated by both
 colour and a symbol. Weather and time-zone data come from Open-Meteo; Moon data
 is calculated locally with the existing astronomy module.

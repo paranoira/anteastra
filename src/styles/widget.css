@@ -47,8 +47,7 @@ a { -webkit-tap-highlight-color: transparent; }
 
 .widget-header,
 .widget-footer,
-.location-toggle,
-.moon-section {
+.location-toggle {
   display: flex;
   align-items: center;
 }
@@ -389,46 +388,62 @@ a { -webkit-tap-highlight-color: transparent; }
 .forecast-placeholder i { width: 9px; height: 53px; }
 .forecast-placeholder b { width: 60%; height: 8px; }
 
-.moon-section {
-  display: grid;
-  grid-template-columns: 50px minmax(84px, 100px) minmax(0, 1fr);
-  grid-template-rows: auto auto;
-  align-items: center;
-  min-height: 82px;
-  gap: 0.18rem 0.45rem;
-  padding: 0.6rem;
+.celestial-section {
+  padding: 0.62rem 0.6rem 0.68rem;
   border-top: 1px solid var(--border);
 }
 
-.moon-visual { grid-row: 1 / 3; width: 50px; height: 50px; }
+.moon-summary {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding-inline: 0.15rem;
+}
+.moon-summary h2 { margin: 0; color: var(--muted); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.moon-summary p { min-width: 0; display: flex; align-items: baseline; gap: 0.3rem; margin: 0; }
+.moon-summary strong { overflow: hidden; font-size: 0.78rem; text-overflow: ellipsis; white-space: nowrap; }
+.moon-summary span { color: var(--accent); font-size: 0.72rem; font-weight: 800; }
+
+.celestial-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.35rem 0 0.28rem;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface-soft) 78%, transparent);
+  overflow: visible;
+}
+.current-time-band { fill: color-mix(in srgb, var(--accent) 24%, transparent); }
+.celestial-horizon { stroke: var(--border); stroke-width: 1.25; stroke-dasharray: 3 3; }
+.celestial-track { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.7; }
+.sun-track { stroke: var(--warning); }
+.moon-track { stroke: var(--accent); }
+.celestial-time-scale line { stroke: var(--muted); stroke-width: 0.8; opacity: 0.7; }
+.celestial-time-scale text { fill: var(--muted); font-size: 7.5px; font-weight: 750; }
+.current-time-label { fill: var(--text); font-size: 7.5px; font-weight: 850; paint-order: stroke; stroke: var(--surface); stroke-width: 2px; }
+.celestial-event-marker { stroke: var(--surface); stroke-width: 1.5; }
+.celestial-event-marker[data-body="sun"] { fill: var(--warning); }
+.celestial-event-marker[data-body="moon"] { fill: var(--accent); }
+.sun-current-marker > circle:first-child { fill: var(--warning); }
+.sun-current-halo { fill: none; stroke: var(--warning); stroke-width: 2.5; opacity: 0.4; }
+.chart-moon-marker { transform-box: fill-box; transform-origin: center; }
 .moon-shadow { fill: var(--bg); }
 .moon-lit { fill: var(--text); }
 .moon-outline { fill: none; stroke: var(--border); stroke-width: 2; }
 
-.moon-horizon-dial {
-  grid-row: 1 / 3;
-  width: 100%;
-  max-width: 100px;
-  overflow: visible;
+.celestial-events {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.2rem 0.55rem;
+  margin: 0;
+  padding-inline: 0.15rem;
 }
-.moon-horizon-dial text { fill: var(--muted); font-size: 8px; font-weight: 750; }
-.moon-dial-track { fill: none; stroke: var(--border); stroke-width: 6; }
-.moon-dial-above { fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round; }
-.moon-dial-marker { stroke: var(--surface); stroke-width: 2; }
-.moonrise-marker { fill: var(--success); }
-.moonset-marker { fill: var(--warning); }
-.moon-dial-center { fill: var(--muted); }
-
-.moon-summary { min-width: 0; flex: 1; }
-.moon-summary h2 { margin: 0 0 0.12rem; color: var(--muted); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; }
-.moon-summary p { margin: 0; }
-.moon-summary strong { display: block; overflow: hidden; font-size: 0.78rem; text-overflow: ellipsis; white-space: nowrap; }
-.moon-summary span { color: var(--accent); font-size: 0.72rem; font-weight: 800; }
-
-.moon-events { display: grid; gap: 0.1rem; margin: 0; }
-.moon-events div { display: grid; grid-template-columns: 18px auto; align-items: baseline; }
-.moon-events dt { color: var(--accent); font-weight: 900; }
-.moon-events dd { margin: 0; font-size: 0.72rem; font-weight: 850; font-variant-numeric: tabular-nums; }
+.celestial-events div { min-width: 0; display: grid; grid-template-columns: 26px auto; align-items: baseline; }
+.celestial-events dt { color: var(--accent); font-weight: 900; }
+.celestial-events .sun-event dt { color: var(--warning); }
+.celestial-events dd { margin: 0; font-size: 0.72rem; font-weight: 850; font-variant-numeric: tabular-nums; }
 
 .widget-footer {
   min-height: 40px;
@@ -461,12 +476,8 @@ a { -webkit-tap-highlight-color: transparent; }
 
 @media (max-width: 285px) {
   .quick-locations { grid-template-columns: 1fr; }
-  .moon-section {
-    grid-template-columns: 46px 84px minmax(0, 1fr);
-    column-gap: 0.32rem;
-    padding-inline: 0.5rem;
-  }
-  .moon-visual { width: 46px; height: 46px; }
+  .celestial-section { padding-inline: 0.45rem; }
+  .celestial-events { column-gap: 0.3rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

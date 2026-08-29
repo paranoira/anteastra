@@ -1,5 +1,5 @@
 import { runtime } from "../i18n/translations.js";
-import { calculateNightSky, createMoonIlluminationPath } from "./astronomy.js";
+import { calculateCelestialDay, createMoonIlluminationPath } from "./astronomy.js";
 import * as SunCalc from "suncalc";
 
 const STORAGE_KEY = "timee.location.v1";
@@ -34,9 +34,11 @@ const copy = {
     gpsError: "A helyzet nem határozható meg. Az iframe engedélyében az allow=\"geolocation\" beállításra is szükség lehet.",
     invalidCoordinates: "Érvénytelen koordináták.",
     moon: "Hold",
+    sunrise: "Napkelte",
+    sunset: "Napnyugta",
     moonrise: "Holdkelte",
     moonset: "Holdnyugta",
-    moonDial: "A Hold horizont feletti időszaka 24 órás számlapon",
+    celestialChart: "A Nap és a Hold horizont feletti és alatti pályája 24 órás időskálán",
     noEvent: "—",
     fullSite: "Részletes előrejelzés",
     updated: "Frissítve",
@@ -63,9 +65,11 @@ const copy = {
     gpsError: "Location is unavailable. The embedding iframe may also need allow=\"geolocation\".",
     invalidCoordinates: "Invalid coordinates.",
     moon: "Moon",
+    sunrise: "Sunrise",
+    sunset: "Sunset",
     moonrise: "Moonrise",
     moonset: "Moonset",
-    moonDial: "Moon-above-horizon period on a 24-hour dial",
+    celestialChart: "Sun and Moon paths above and below the horizon on a 24-hour timeline",
     noEvent: "—",
     fullSite: "Detailed forecast",
     updated: "Updated",
@@ -140,9 +144,10 @@ function mapUi() {
     "longitude-input", "latitude-label", "longitude-label", "coordinate-submit", "widget-status",
     "forecast-title", "forecast-list", "cloud-key-label", "quality-good-label",
     "quality-mixed-label", "quality-poor-label", "moon-visual", "moon-lit-path", "moon-title",
-    "moon-phase", "moon-illumination", "moonrise-label", "moonset-label", "moonrise-time",
-    "moonset-time", "moon-horizon-dial", "moon-above-circle", "moon-above-arc",
-    "moonrise-marker", "moonset-marker", "full-site-link"
+    "moon-phase", "moon-illumination", "sunrise-label", "sunset-label", "moonrise-label",
+    "moonset-label", "sunrise-time", "sunset-time", "moonrise-time", "moonset-time",
+    "celestial-chart", "current-time-band", "current-time-label", "celestial-time-scale",
+    "sun-track", "moon-track", "celestial-event-markers", "sun-current-marker", "full-site-link"
   ].forEach((id) => {
     ui[toCamel(id)] = document.getElementById(id);
   });
@@ -170,6 +175,8 @@ function applyCopy() {
   ui.qualityMixedLabel.textContent = text.quality.mixed;
   ui.qualityPoorLabel.textContent = text.quality.poor;
   ui.moonTitle.textContent = text.moon;
+  ui.sunriseLabel.textContent = text.sunrise;
+  ui.sunsetLabel.textContent = text.sunset;
   ui.moonriseLabel.textContent = text.moonrise;
   ui.moonsetLabel.textContent = text.moonset;
   ui.fullSiteLink.textContent = `${text.fullSite} →`;
@@ -392,13 +399,15 @@ function renderDate() {
 function renderLoading() {
   ui.widgetDate.textContent = "—";
   ui.forecastList.setAttribute("aria-busy", "true");
-  ui.forecastList.replaceChildren(...Array.from({ length: 6 }, createForecastPlaceholder));
+  ui.forecastList.replaceChildren(...Array.from({ length: 12 }, createForecastPlaceholder));
   ui.moonPhase.textContent = "—";
   ui.moonIllumination.textContent = "—";
+  ui.sunriseTime.textContent = "—";
+  ui.sunsetTime.textContent = "—";
   ui.moonriseTime.textContent = "—";
   ui.moonsetTime.textContent = "—";
   ui.moonLitPath.setAttribute("d", "");
-  clearMoonDial();
+  clearCelestialChart();
 }
 
 function createForecastPlaceholder() {
@@ -415,14 +424,16 @@ function renderUnavailable() {
   ui.forecastList.replaceChildren();
   ui.moonPhase.textContent = "—";
   ui.moonIllumination.textContent = "—";
+  ui.sunriseTime.textContent = "—";
+  ui.sunsetTime.textContent = "—";
   ui.moonriseTime.textContent = "—";
   ui.moonsetTime.textContent = "—";
   ui.moonLitPath.setAttribute("d", "");
-  clearMoonDial();
+  clearCelestialChart();
 }
 
 function renderForecast(hours) {
-  const sampledHours = hours.filter((_, index) => index % 2 === 0).slice(0, 6);
+  const sampledHours = hours.slice(0, 12);
   const items = sampledHours.map((hour) => {
     const condition = getWeatherCondition(hour.weatherCode);
     const quality = getObservingQuality(hour, condition.icon);
@@ -591,9 +602,10 @@ function getDewState(temperature, dewPoint, humidity) {
 }
 
 function renderMoon(elevation) {
-  let astronomy;
+  let celestial;
   try {
-    astronomy = calculateNightSky({
+    celestial = calculateCelestialDay({
+      date: new Date(),
       latitude: state.location.latitude,
       longitude: state.location.longitude,
       elevation,
@@ -601,89 +613,108 @@ function renderMoon(elevation) {
     });
   } catch (error) {
     console.error(error);
-    astronomy = null;
+    celestial = null;
   }
-  if (!astronomy?.moon) return;
+  if (!celestial?.moon) return;
 
-  const moon = astronomy.moon;
+  const moon = celestial.moon;
   const phaseName = runtime[state.locale].astronomy.phaseNames[moon.phaseIndex] || "—";
   const illumination = Math.round(moon.fraction * 100);
   ui.moonPhase.textContent = phaseName;
   ui.moonIllumination.textContent = `${illumination}%`;
+  ui.sunriseTime.textContent = formatEventTime(celestial.sun.rise);
+  ui.sunsetTime.textContent = formatEventTime(celestial.sun.set);
   ui.moonriseTime.textContent = formatEventTime(moon.rise);
   ui.moonsetTime.textContent = formatEventTime(moon.set);
-  renderMoonDial(moon);
   ui.moonLitPath.setAttribute("d", createMoonIlluminationPath(moon.fraction, moon.waxing, 36));
   ui.moonLitPath.setAttribute("transform", `rotate(${moon.rotation.toFixed(2)} 50 50)`);
   ui.moonVisual.setAttribute("aria-label", runtime[state.locale].astronomy.moonAria(phaseName, illumination));
+  renderCelestialChart(celestial);
 }
 
-function clearMoonDial() {
-  ui.moonAboveArc?.setAttribute("d", "");
-  if (ui.moonAboveCircle) ui.moonAboveCircle.hidden = true;
-  if (ui.moonriseMarker) ui.moonriseMarker.hidden = true;
-  if (ui.moonsetMarker) ui.moonsetMarker.hidden = true;
-  ui.moonHorizonDial?.removeAttribute("aria-label");
-}
-
-function renderMoonDial(moon) {
-  clearMoonDial();
-  const riseMinutes = getLocalClockMinutes(moon.rise);
-  const setMinutes = getLocalClockMinutes(moon.set);
-  const startMinutes = getLocalClockMinutes(moon.horizonStart);
-  const endMinutes = getLocalClockMinutes(moon.horizonEnd);
-
-  if (Number.isFinite(riseMinutes) && Number.isFinite(setMinutes)) {
-    ui.moonAboveArc.setAttribute("d", describeClockArc(riseMinutes, setMinutes));
-  } else if (!moon.rise && !moon.set && moon.horizonStartsAbove) {
-    ui.moonAboveCircle.hidden = false;
-  } else if (Number.isFinite(riseMinutes) && Number.isFinite(endMinutes)) {
-    ui.moonAboveArc.setAttribute("d", describeClockArc(riseMinutes, endMinutes));
-  } else if (Number.isFinite(startMinutes) && Number.isFinite(setMinutes)) {
-    ui.moonAboveArc.setAttribute("d", describeClockArc(startMinutes, setMinutes));
+function clearCelestialChart() {
+  ui.sunTrack?.setAttribute("d", "");
+  ui.moonTrack?.setAttribute("d", "");
+  ui.celestialTimeScale?.replaceChildren();
+  ui.celestialEventMarkers?.replaceChildren();
+  if (ui.sunCurrentMarker) ui.sunCurrentMarker.hidden = true;
+  if (ui.moonVisual) ui.moonVisual.hidden = true;
+  if (ui.currentTimeBand) ui.currentTimeBand.hidden = true;
+  if (ui.currentTimeLabel) {
+    ui.currentTimeLabel.textContent = "";
+    ui.currentTimeLabel.hidden = true;
   }
+  ui.celestialChart?.removeAttribute("aria-label");
+}
 
-  positionDialMarker(ui.moonriseMarker, riseMinutes);
-  positionDialMarker(ui.moonsetMarker, setMinutes);
-  ui.moonHorizonDial.setAttribute(
-    "aria-label",
-    `${copy[state.locale].moonDial}. ${copy[state.locale].moonrise}: ${formatEventTime(moon.rise)}. ${copy[state.locale].moonset}: ${formatEventTime(moon.set)}.`
+function renderCelestialChart(celestial) {
+  clearCelestialChart();
+  const duration = celestial.end.getTime() - celestial.start.getTime();
+  if (!(duration > 0)) return;
+  const chart = { left: 18, right: 282, top: 14, bottom: 126, horizon: 70 };
+  const timeToX = (date) => chart.left + ((date.getTime() - celestial.start.getTime()) / duration) * (chart.right - chart.left);
+  const altitudeToY = (altitude) => chart.horizon - (clamp(altitude, -60, 60) / 60) * (chart.horizon - chart.top);
+  const buildTrack = (key) => celestial.samples.map((sample, index) => {
+    const x = timeToX(sample.time);
+    const y = altitudeToY(sample[key]);
+    return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
+  }).join(" ");
+
+  ui.sunTrack.setAttribute("d", buildTrack("sunAltitude"));
+  ui.moonTrack.setAttribute("d", buildTrack("moonAltitude"));
+
+  const ticks = [];
+  for (const tick of celestial.hourTicks) {
+    const x = timeToX(tick.time);
+    const major = tick.hour % 3 === 0;
+    ticks.push(createSvgElement("line", {
+      x1: x.toFixed(2), y1: "132", x2: x.toFixed(2), y2: major ? "140" : "136"
+    }));
+    if (major) {
+      const label = createSvgElement("text", { x: x.toFixed(2), y: "151", "text-anchor": "middle" });
+      label.textContent = String(tick.hour).padStart(2, "0");
+      ticks.push(label);
+    }
+  }
+  ui.celestialTimeScale.replaceChildren(...ticks);
+
+  const currentX = clamp(timeToX(celestial.currentTime), chart.left, chart.right);
+  ui.currentTimeBand.setAttribute("x", (currentX - 5).toFixed(2));
+  ui.currentTimeBand.hidden = false;
+  ui.currentTimeLabel.setAttribute("x", currentX.toFixed(2));
+  ui.currentTimeLabel.textContent = formatHour(celestial.currentTime);
+  ui.currentTimeLabel.hidden = false;
+
+  const sunY = altitudeToY(celestial.sun.altitude);
+  ui.sunCurrentMarker.setAttribute("transform", `translate(${currentX.toFixed(2)} ${sunY.toFixed(2)})`);
+  ui.sunCurrentMarker.hidden = false;
+
+  const moonY = altitudeToY(celestial.moon.altitude);
+  ui.moonVisual.setAttribute(
+    "transform",
+    `translate(${(currentX - 9).toFixed(2)} ${(moonY - 9).toFixed(2)}) scale(0.18)`
   );
-}
+  ui.moonVisual.hidden = false;
 
-function getLocalClockMinutes(date) {
-  if (!(date instanceof Date) || !Number.isFinite(date.getTime()) || !state.timeZone) return null;
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: state.timeZone,
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23"
-  }).formatToParts(date);
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  const hour = Number(values.hour);
-  const minute = Number(values.minute);
-  return Number.isFinite(hour) && Number.isFinite(minute) ? hour * 60 + minute : null;
-}
-
-function describeClockArc(startMinutes, endMinutes) {
-  const duration = (endMinutes - startMinutes + 1440) % 1440;
-  if (duration < 0.5) return "";
-  const start = clockPoint(startMinutes);
-  const end = clockPoint(endMinutes);
-  return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A 36 36 0 ${duration > 720 ? 1 : 0} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
-}
-
-function positionDialMarker(marker, minutes) {
-  if (!marker || !Number.isFinite(minutes)) return;
-  const point = clockPoint(minutes);
-  marker.setAttribute("cx", point.x.toFixed(2));
-  marker.setAttribute("cy", point.y.toFixed(2));
-  marker.hidden = false;
-}
-
-function clockPoint(minutes) {
-  const angle = (minutes / 1440) * Math.PI * 2 - Math.PI / 2;
-  return { x: 60 + 36 * Math.cos(angle), y: 60 + 36 * Math.sin(angle) };
+  const eventMarkers = [
+    [celestial.sun.rise, "sun"],
+    [celestial.sun.set, "sun"],
+    [celestial.moon.rise, "moon"],
+    [celestial.moon.set, "moon"]
+  ].filter(([date]) => date instanceof Date && Number.isFinite(date.getTime())).map(([date, body]) =>
+    createSvgElement("circle", {
+      class: "celestial-event-marker",
+      "data-body": body,
+      cx: timeToX(date).toFixed(2),
+      cy: body === "sun" ? "66" : "74",
+      r: "3.4"
+    })
+  );
+  ui.celestialEventMarkers.replaceChildren(...eventMarkers);
+  ui.celestialChart.setAttribute(
+    "aria-label",
+    `${copy[state.locale].celestialChart}. ${copy[state.locale].sunrise}: ${formatEventTime(celestial.sun.rise)}. ${copy[state.locale].sunset}: ${formatEventTime(celestial.sun.set)}. ${copy[state.locale].moonrise}: ${formatEventTime(celestial.moon.rise)}. ${copy[state.locale].moonset}: ${formatEventTime(celestial.moon.set)}.`
+  );
 }
 
 function getWeatherCondition(code) {

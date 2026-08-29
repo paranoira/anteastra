@@ -217,6 +217,66 @@ export function calculateNightSky({ date = new Date(), latitude, longitude, elev
 }
 
 /**
+ * Build a selected-location 24-hour Sun/Moon track for the local calendar day.
+ * Samples are absolute instants between two zone-correct local midnights, so
+ * DST transition days remain accurate instead of assuming a fixed 24 hours.
+ */
+export function calculateCelestialDay({ date = new Date(), latitude, longitude, elevation = 0, timeZone }) {
+  if (!isValidDate(date) || !Number.isFinite(latitude) || !Number.isFinite(longitude) || !timeZone) return null;
+
+  const local = zonedParts(date, timeZone);
+  const calendarDate = { year: local.year, month: local.month, day: local.day };
+  const followingDate = addCalendarDays(calendarDate, 1);
+  const start = zonedDate(calendarDate, 0, 0, timeZone);
+  const end = zonedDate(followingDate, 0, 0, timeZone);
+  const anchor = zonedDate(calendarDate, 12, 0, timeZone);
+  const height = Number.isFinite(elevation) ? Math.max(0, elevation) : 0;
+  const sunTimes = SunCalc.getTimes(anchor, latitude, longitude, height);
+  const moonEvents = collectMoonEvents(start, end, latitude, longitude);
+  const sampleCount = 48;
+  const samples = Array.from({ length: sampleCount + 1 }, (_, index) => {
+    const time = new Date(start.getTime() + ((end.getTime() - start.getTime()) * index) / sampleCount);
+    return {
+      time,
+      sunAltitude: SunCalc.getPosition(time, latitude, longitude).altitude,
+      moonAltitude: SunCalc.getMoonPosition(time, latitude, longitude).altitude
+    };
+  });
+  const moonIllumination = SunCalc.getMoonIllumination(date);
+  const moonPosition = SunCalc.getMoonPosition(date, latitude, longitude);
+  const moonPhase = ((moonIllumination.phase % 1) + 1) % 1;
+  const hourTicks = Array.from({ length: 25 }, (_, hour) => ({
+    hour,
+    time: hour === 24 ? end : zonedDate(calendarDate, hour, 0, timeZone)
+  }));
+
+  const eventInsideDay = (value) => isValidDate(value) && value >= start && value <= end ? value : null;
+
+  return {
+    start,
+    end,
+    samples,
+    hourTicks,
+    sun: {
+      rise: eventInsideDay(sunTimes.sunrise),
+      set: eventInsideDay(sunTimes.sunset),
+      altitude: SunCalc.getPosition(date, latitude, longitude).altitude
+    },
+    moon: {
+      rise: moonEvents.rise,
+      set: moonEvents.set,
+      altitude: moonPosition.altitude,
+      fraction: Math.min(1, Math.max(0, moonIllumination.fraction)),
+      phase: moonPhase,
+      phaseIndex: Math.round(moonPhase * 8) % 8,
+      waxing: moonIllumination.waxing,
+      rotation: moonIllumination.angle - moonPosition.parallacticAngle
+    },
+    currentTime: date
+  };
+}
+
+/**
  * Build the closed illuminated polygon for a `viewBox="0 0 100 100"` Moon.
  * `steps` trades path smoothness for size; observer-relative rotation is applied
  * later by the renderer, not baked into this geometry.
